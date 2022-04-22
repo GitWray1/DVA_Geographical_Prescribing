@@ -1,12 +1,12 @@
 
 # Load packages -----------------------------------------------------------
 
-library(tidyverse)
+library(dplyr)
 library(lubridate)
 library(sf)
 library(leaflet)
-library(janitor)
-library(plotly)
+library(plotly) 
+# Check order of packages and explicitly call package name for each function
 
 # Import data -------------------------------------------------------------
 
@@ -15,12 +15,13 @@ data_file <- "1_data_prep/output_files/DOACs_data.csv"
 shape_file <- "1_data_prep/output_files/simplified_geojsons/simplified_CCGs_(April_2021)_EN_BFC.geojson"
 
 # Read in data
-df <- read_csv(data_file)
+
+df <- readr::read_csv(data_file)
 
 # Read in CCG shapefile
-ccg_shape_df <- st_read(shape_file, as_tibble = TRUE) %>%  
+ccg_shape_df <- sf::st_read(shape_file, as_tibble = TRUE) %>%  
                         select(-OBJECTID) %>% 
-                        clean_names()
+                        janitor::clean_names()
 
 # Line chart - using plotly -----------------------------------------------
 
@@ -36,6 +37,7 @@ line_df <- df %>%
     ungroup()
 
 # Create line chart
+
 line_df %>%
     plot_ly(x = ~date, 
             y = ~nat_items, 
@@ -115,9 +117,9 @@ data_shp_df %>%
                                               fillOpacity = 0.7,
                                               bringToFront = TRUE),
                 label = ~paste0("Name: ", data_shp_df$ccg_name,
-                                "<br>ODS code: ", data_shp_df$ccg_ods,
+                                "\nODS code: ", data_shp_df$ccg_ods,
                                 "<br>GSS code: ", data_shp_df$ccg_gss,
-                                "<br>Items: ", data_shp_df$items_per_1000),
+                                "<br>Items: ", round(data_shp_df$items_per_1000, 2)),
                 labelOptions = labelOptions(textsize = "12px",
                                             style = list("font-family" = "Arial")))
 
