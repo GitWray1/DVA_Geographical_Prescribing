@@ -10,8 +10,17 @@ library(plotly)
 
 # Import data -------------------------------------------------------------
 
-df <- read_csv("1_data_prep/output_files/DOACs_data.csv")
+# File locations
+data_file <- "1_data_prep/output_files/DOACs_data.csv"
+shape_file <- "1_data_prep/output_files/simplified_geojsons/simplified_CCGs_(April_2021)_EN_BFC.geojson"
 
+# Read in data
+df <- read_csv(data_file)
+
+# Read in CCG shapefile
+ccg_shape_df <- st_read(shape_file, as_tibble = TRUE) %>%  
+                        select(-OBJECTID) %>% 
+                        clean_names()
 
 # Line chart - using plotly -----------------------------------------------
 
@@ -77,6 +86,38 @@ col_df %>%
 
 # Create leaflet map ------------------------------------------------------
 
+# Join data to shapefiles dataframe
+data_shp_df <- left_join(ccg_shape_df, col_df,
+                         by = c("ccg21cd" = "ccg_gss",
+                                "ccg21nm" = "ccg_name")) %>% 
+                dplyr::rename("ccg_gss" = "ccg21cd",
+                              "ccg_name" = "ccg21nm") %>% 
+                mutate(items_per_1000 = items/(total_list_size/1000))
 
+# Set colour pallete to use
+pal <- colorNumeric("plasma", domain = NULL)
 
+# Create leaflet map - need to add legend and sort out labels 
+data_shp_df %>% 
+    leaflet(options = leafletOptions(zoomDelta = 0.5,
+                                     zoomSnap = 0.5)) %>% 
+    setView(lat = 53, 
+            lng = -1.5, 
+            zoom = 6.5) %>%
+    addProviderTiles(provider = "CartoDB.Positron") %>% 
+    addPolygons(fillColor = ~pal(items_per_1000),
+                 fillOpacity = 0.3,
+                 color = "#393939",
+                 weight = 1.5,
+                 opacity = 1,
+                 highlight = highlightOptions(weight = 3,
+                                              color = "#451551",
+                                              fillOpacity = 0.7,
+                                              bringToFront = TRUE),
+                label = ~paste0("Name: ", data_shp_df$ccg_name,
+                                "<br>ODS code: ", data_shp_df$ccg_ods,
+                                "<br>GSS code: ", data_shp_df$ccg_gss,
+                                "<br>Items: ", data_shp_df$items_per_1000),
+                labelOptions = labelOptions(textsize = "12px",
+                                            style = list("font-family" = "Arial")))
 
