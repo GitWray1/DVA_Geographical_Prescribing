@@ -3,8 +3,10 @@ library(dplyr)
 
 
 server <- function(input, output, session) {
-
-    df_small <- df %>% select(date, chemical, bnf_code, ccg_name, ccg_ods, total_list_size, items, quantity, actual_cost)
+    
+    df_small <- df %>% select(date, chemical, bnf_code, 
+                              ccg_name, ccg_ods, registered_patients, 
+                              items, quantity, actual_cost)
     
     output$data_table <- DT::renderDataTable(df_small,
                                              filter = "top",

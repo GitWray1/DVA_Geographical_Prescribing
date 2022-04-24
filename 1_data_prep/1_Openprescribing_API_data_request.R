@@ -1,19 +1,8 @@
 # Load Packages -----------------------------------------------------------
 
 library(dplyr)
-library(readr)
-library(jsonlite)
-library(crul)
-library(lubridate)
-library(purrr)
-library(janitor)
 
-
-# Data source list --------------------------------------------------------
-
-# CCG to STP lookup - Open Geography Portal lookups
-# STP to region lookup - Open Geography Portal lookups
-# Codes - custom selection
+# BNF code lookup - readr::read_csv("1_data_prep/input_files/BNF_code_lookup.csv")
 
 # Functions ---------------------------------------------------------------
 
@@ -30,7 +19,7 @@ build_url <- function(url_bnf_code){
 # Function to extract csv from async response
 extract_csv <- function(x){
   tmp_response <- x$parse("UTF-8")
-  response_df <- read_csv(tmp_response)
+  response_df <- readr::read_csv(tmp_response)
   return(response_df)
 }
 
@@ -38,14 +27,14 @@ extract_csv <- function(x){
 # Import area and population data -----------------------------------------
 
 # Lookups to map CCGs to STPs and regions, population of each CCG by month
-STP_to_region_lookup <- read_csv("1_data_prep/input_files/STP_to_region_(April_2021)_lookup.csv")
-CCG_to_STP_lookup <- read_csv("1_data_prep/input_files/CCG_to_STPs_(April_2021)_lookup.csv")
-CCG_pop_df <- read_csv("https://openprescribing.net/api/1.0/org_details/?org_type=ccg&keys=total_list_size&format=csv")
+STP_to_region_lookup <- readr::read_csv("1_data_prep/input_files/STP_to_region_(April_2021)_lookup.csv")
+CCG_to_STP_lookup <- readr::read_csv("1_data_prep/input_files/CCG_to_STPs_(April_2021)_lookup.csv")
+CCG_pop_df <- readr::read_csv("https://openprescribing.net/api/1.0/org_details/?org_type=ccg&keys=total_list_size&format=csv")
 
 # Join area lookups into one, drop unused column and clean column names
 areas_lookup <- left_join(STP_to_region_lookup, CCG_to_STP_lookup) %>% 
   select(-FID) %>% 
-  clean_names()
+  janitor::clean_names()
 
 # Remove names (we have this elsewhere), rename code column for upcoming join
 CCG_pop_df <- CCG_pop_df %>% 
@@ -53,23 +42,25 @@ CCG_pop_df <- CCG_pop_df %>%
   rename("ccg21cdh" = row_id)
 
 # Join lookup data to population dataset
-area_pop_df <- left_join(CCG_pop_df, areas_lookup) %>%             
+area_pop_df <- left_join(CCG_pop_df, areas_lookup) %>% 
+  rename("registered_patients" = total_list_size) %>% 
   select(date, 
          nhser21nm, nhser21cdh, nhser21cd,
          stp21nm, stp21cdh, stp21cd,
          ccg21nm, ccg21cdh, ccg21cd,
-         total_list_size)
+         registered_patients)
 
 # Import list of chemicals and codes  -------------------------------------
 
-chemical_bnf_codes <- read_csv("1_data_prep/input_files/opioid_gabapent_codes.csv", col_types = cols(chemical = col_character(),
-                                                                  bnf_code = col_character()))
+chemical_bnf_codes <- readr::read_csv("1_data_prep/input_files/DOAC_codes.csv",
+                                              col_types = readr::cols(chemical = readr::col_character(),
+                                                                      bnf_code = readr::col_character()))
 
 
 # Create URLs for API -----------------------------------------------------
 
 chemical_bnf_codes <- chemical_bnf_codes %>% 
-  mutate("csv_url" = map_chr(bnf_code, build_url)) %>% 
+  mutate("csv_url" = purrr::map_chr(bnf_code, build_url)) %>% 
   filter(!bnf_code %in% c("0407020D0","0407020Z0","0407020U0"))
 
 # Removed the following as they return no data (no prescribing) and throw errors
@@ -86,7 +77,7 @@ res <- dd$get()
 all(vapply(res, function(z) z$success(), logical(1)))
 
 # Extract csv files from async responses
-async_dfs <- res %>% map(extract_csv)
+async_dfs <- res %>% purrr::map(extract_csv)
 
 
 # Clean up data -----------------------------------------------------------
@@ -101,12 +92,13 @@ for (i in seq_along(async_dfs)){
 }
 
 # Concatenate the results and filter out NHS Vale Royal - old CCG that has since closed
-final_df <- bind_rows(async_dfs) %>% filter(!row_id == "02D")
+final_df <- bind_rows(async_dfs) %>% 
+                filter(!row_id == "02D")
 
 # Join to population and area dataset, drop duplicate column, rename and reorder columns
 final_df <- final_df %>% 
                 left_join(area_pop_df, by = c("date" = "date", 
-                                          "row_id" = "ccg21cdh")) %>% 
+                                              "row_id" = "ccg21cdh")) %>% 
                 select(-row_name) %>% 
                 rename("ccg_ods" = row_id,
                        "ccg_gss" = ccg21cd,
@@ -117,9 +109,11 @@ final_df <- final_df %>%
                        "region_ods" = nhser21cdh,
                        "region_gss" = nhser21cd,
                        "region_name" = nhser21nm) %>% 
-                relocate(ccg_ods, ccg_gss, total_list_size, 
+                relocate(ccg_ods, ccg_gss, registered_patients, 
                          items, quantity, actual_cost, .after = ccg_name)
 
 # Write data to csv file
-write_csv(final_df, "1_data_prep/output_files/opioid_gabapent_data.csv")
-write_csv(area_pop_df, "1_data_prep/output_files/area_populations_df.csv")
+readr::write_csv(final_df, "1_data_prep/output_files/DOACs_data.csv")
+readr::write_csv(area_pop_df, "1_data_prep/output_files/area_populations_df.csv")
+
+

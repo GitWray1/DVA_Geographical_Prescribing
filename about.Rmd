@@ -1,0 +1,66 @@
+---
+title: "about"
+output: html_document
+---
+
+### Last update
+
+This page was last updated on 24th April 2022.
+
+
+### How to use this dashboard
+
+Heres is some example text to use on this dashboard
+
+
+### Data sources
+
+**Prescribing data** is requested from the [OpenPrescribing FAQs][1], which provides a search interface for the [English Prescribing Dataset][3], published by the NHS Business Services Authority (NHSBSA).
+
+**BNF codes and names** are taken from the NHSBSA [Information Services Portal][4].
+
+**CCG to STP and region mapping** information is taken from the Office for National Statistics (ONS) [Open Geography Portal][5].
+
+**CCG, STP and regional boundaries** are taken from the ONS [Open Geography Portal][5].
+
+All data is used under the terms of the Open Government Licence
+
+
+### Data definitions 
+
+The definitions below were taken directly from [OpenPrescribing.net][6]. For more information we recommend reading the [OpenPrescribing FAQs][1]. 
+
+**Items** shows the number of times a medicine has been prescribed. It says nothing about how much of it has been prescribed (for that see quantity) as some presciptions will be for many weeks’ worth of treatment while others will be much smaller.
+
+**Quantity** is the total amount of a medicine that has been prescribed, but the units used depend on the particular form the medicine is in:
+
+- Where the formulation is tablet, capsule, ampoule, vial etc the quantity will be the number of tablets, capsules, ampoules, vials etc
+
+- Where the formulation is a liquid the quantity will be the number of millilitres
+
+- Where the formulation is a solid form (eg. cream, gel, ointment) the quantity will be the number of grams
+
+- Where the formulation is inhalers the quantity is usually the number of inhalers (but there are occasionally inconsistencies here so exercise caution when analysing this data)
+
+Care must be taken when adding together quantities. Obviously quantities cannot be added across units. But even within a given unit it may not make sense to add together quantities of different preparations with different strengths and formulations.
+
+**Actual cost** is the estimated cost to the NHS of supplying a medicine. The Drug Tariff and other price lists specify a Net Ingredient Cost (NIC) for a drug, but pharmacists usually receive a discount on this price. Additionally they receive a "container allowance" each time they dispense a prescription. The actual cost is estimated from the net ingredient cost by subtracting the average percentage discount received by pharmacists in the previous month and adding in the cost of the container allowance.
+
+
+### Code
+
+The code use to build this dashboard are available on [GitHub][7]
+
+
+### Contact information
+
+Insert contact information when complete
+
+
+[1]: https://openprescribing.net/faq/ "OpenPrescribing FAQs"
+[2]: https://openprescribing.net/api/ "OpenPrescribing API"
+[3]: https://www.nhsbsa.nhs.uk/prescription-data/prescribing-data/english-prescribing-data-epd "English Prescribing Dataset"
+[4]: https://www.nhsbsa.nhs.uk/access-our-data-products/information-services-portal-isp "Information Services Portal"
+[5]: https://geoportal.statistics.gov.uk/ "Open Geography Portal"
+[6]: https://openprescribing.net/ "OpenPrescribing.net"
+[7]: "GitHub"
