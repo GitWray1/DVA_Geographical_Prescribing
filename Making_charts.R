@@ -2,11 +2,8 @@
 # Load packages -----------------------------------------------------------
 
 library(dplyr)
-#library(lubridate)
-#library(sf)
 library(leaflet)
 library(plotly) 
-# Check order of packages and explicitly call package name for each function
 
 # Import data -------------------------------------------------------------
 
@@ -122,3 +119,24 @@ data_shp_df %>%
                 labelOptions = labelOptions(textsize = "12px",
                                             style = list("font-family" = "Arial")))
 
+
+
+# Working area ------------------------------------------------------------
+
+test <- df %>% select(date, chemical, bnf_code, starts_with("ccg"),
+              registered_patients, items, quantity, actual_cost) %>% 
+    filter(chemical == "Apixaban") %>% 
+    group_by(date, chemical, bnf_code, across(starts_with("ccg"))) %>% 
+    summarise("registered_patients" = sum(registered_patients), 
+              "items" = sum(items), 
+              "quantity" = sum(quantity), 
+              "actual_cost" = sum(actual_cost)) %>% 
+    ungroup()
+
+test %>% 
+    filter(date >= "2020-01-01",
+           date <= "2020-12-01") %>% 
+    group_by(chemical, bnf_code, across(starts_with("ccg"))) %>% 
+    summarise("items" = sum(items),
+              "quantity" = sum(quantity), 
+              "actual_cost" = sum(actual_cost))

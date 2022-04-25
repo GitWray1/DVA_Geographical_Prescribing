@@ -1,0 +1,22 @@
+#filterpanel {
+    background-color: #FFFFFF;
+    border-color: #0e0e0e;
+    padding: 10px 10px 10px 20px;
+    cursor: move;
+}
+
+hr {
+    border-color: gray;
+    background-color: 0.5em;
+    margin-bottom: 0.5em;
+}
+
+div.outer {
+    position: fixed;
+    top: 50px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow: hidden;
+    padding: 0;
+}

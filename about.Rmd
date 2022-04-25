@@ -10,7 +10,7 @@ This page was last updated on 24th April 2022.
 
 ### How to use this dashboard
 
-Heres is some example text to use on this dashboard
+Here is some example text to use on this dashboard
 
 
 ### Data sources
@@ -49,7 +49,7 @@ Care must be taken when adding together quantities. Obviously quantities cannot 
 
 ### Code
 
-The code use to build this dashboard are available on [GitHub][7]
+The code used to build this dashboard are available on [GitHub][7]
 
 
 ### Contact information
