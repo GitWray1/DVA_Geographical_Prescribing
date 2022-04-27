@@ -8,67 +8,16 @@ library(shinythemes)
 library(leaflet)
 
 
-# Load data ---------------------------------------------------------------
-# This is messy - maybe split this out into a separate 'loading data' files and source it in
-# Also create a file with some functions e.g. filter_for_line_chart(), create_map() etc...
+# Source in other files ---------------------------------------------------
 
-data_file <- "1_data_prep/output_files/DOACs_data.csv"
-
-df <- readr::read_csv(data_file)
-
-# Example data for data table tab
-df_small <- df %>% 
-    mutate(date = format(date, "%b %Y")) %>% 
-    select(date, chemical, bnf_code, 
-           ccg_name, ccg_ods, ccg_gss, registered_patients, 
-           items, quantity, actual_cost)
+source("loading_data.R")
+source("global_functions.R")
 
 
-shape_file <- "1_data_prep/output_files/simplified_geojsons/simplified_CCGs_(April_2021)_EN_BFC.geojson"
-
-ccg_shape_df <- sf::st_read(shape_file, as_tibble = TRUE) %>%  
-    select(-OBJECTID) %>% 
-    janitor::clean_names()
-
-col_df <- df %>% 
-    select(date, chemical, ccg_name, ccg_ods, ccg_gss, registered_patients, items, quantity, actual_cost) %>% 
-    filter(chemical == "Apixaban",
-           date == "2022-01-01")
-
-# Example data for leaflet output
-data_shp_df <- left_join(ccg_shape_df, col_df,
-                         by = c("ccg21cd" = "ccg_gss",
-                                "ccg21nm" = "ccg_name")) %>% 
-    dplyr::rename("ccg_gss" = "ccg21cd",
-                  "ccg_name" = "ccg21nm") %>% 
-    mutate(items_per_1000 = items/(registered_patients/1000))
-
-
-# Read in shapefiles -  temporary solution - need to clean up code
-
-files <- list.files(path= "1_data_prep/output_files/simplified_geojsons", pattern = "*.geojson", full.names = TRUE)
-
-shp_files <- tibble()
-
-for (i in seq_along(files)) {
-    
-    temp <- st_read(files[i], as_tibble = TRUE) %>% janitor::clean_names()
-    
-    if (!is.null(temp$global_id)) {
-        temp$global_id <- NULL
-    }
-    
-    colnames(temp) <- c("object_id", "gss_code", "name", "bng_e", "bng_n", "long", "lat", "shape_area", "shape_length", "geometry")
-    
-    temp <- temp %>% select(-object_id)
-    shp_files <- rbind(shp_files,temp)
-    
-}
-
+# Set up extra bits -------------------------------------------------------
 
 # Set colour pallete to use
 pal <- colorNumeric("plasma", domain = NULL)
-
 
 
 # Create Shiny UI ---------------------------------------------------------
