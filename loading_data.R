@@ -9,6 +9,7 @@ library(dplyr)
 data_file <- "1_data_prep/output_files/DOACs_data.csv"
 
 df <- readr::read_csv(data_file)
+df2 <- readr::read_csv("1_data_prep/output_files/DOACs_data_long.csv")
 
 
 # Load in shapefiles ------------------------------------------------------
@@ -51,10 +52,9 @@ bar_chart_df <- df %>%
 data_shp_df <- sf::st_read(shape_files[1], as_tibble = TRUE) %>%  
     select(-OBJECTID) %>% 
     janitor::clean_names() %>% 
-    left_join( bar_chart__df,
+    left_join( bar_chart_df,
                by = c("ccg21cd" = "ccg_gss",
                       "ccg21nm" = "ccg_name")) %>% 
     dplyr::rename("ccg_gss" = "ccg21cd",
                   "ccg_name" = "ccg21nm") %>% 
     mutate(items_per_1000 = items/(registered_patients/1000))
-

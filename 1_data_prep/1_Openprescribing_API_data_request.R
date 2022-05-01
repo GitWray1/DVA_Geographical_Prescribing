@@ -117,3 +117,27 @@ readr::write_csv(final_df, "1_data_prep/output_files/DOACs_data.csv")
 readr::write_csv(area_pop_df, "1_data_prep/output_files/area_populations_df.csv")
 
 
+# Also create long data table ---------------------------------------------
+
+area_types = c("ccg", "stp", "region")
+
+long_df <- tibble()
+
+for (i in seq_along(area_types)){
+    
+    temp <- final_df %>% 
+                group_by(date, chemical, bnf_code, across(contains(area_types[[i]]))) %>% 
+                summarise("registered_patients" = sum(registered_patients), 
+                          "items" = sum(items),
+                          "quantity" = sum(quantity),
+                          "actual_cost" = sum(actual_cost)) %>% 
+                ungroup() %>%
+                rename("name" = paste0(area_types[[i]], "_name"),
+                       "ods_code" = paste0(area_types[[i]], "_ods"),
+                       "gss_code" = paste0(area_types[[i]], "_gss")) %>% 
+                mutate(area_type = area_types[[i]], .before = name)
+    
+    long_df <- rbind(long_df, temp)
+}
+
+readr::write_csv(long_df, "1_data_prep/output_files/DOACs_data_long.csv")

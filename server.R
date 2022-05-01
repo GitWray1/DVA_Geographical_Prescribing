@@ -17,7 +17,10 @@ server <- function(input, output, session) {
                       "items" = sum(items), 
                       "quantity" = sum(quantity), 
                       "actual_cost" = sum(actual_cost)) %>% 
-            ungroup()
+            ungroup() %>% 
+            mutate("items_per_1000" = (items/(registered_patients/1000)),
+                   "quantity_per_1000" = (quantity/(registered_patients/1000)),
+                   "actual_cost_per_1000" = (actual_cost/(registered_patients/1000)))
         })
     
     df_for_bar <- reactive({
@@ -28,12 +31,17 @@ server <- function(input, output, session) {
             group_by(chemical, bnf_code, across(starts_with(input$area))) %>% 
             summarise("items" = sum(items), 
                       "quantity" = sum(quantity), 
-                      "actual_cost" = sum(actual_cost))
+                      "actual_cost" = sum(actual_cost),
+                      "items_per_1000" = mean(items_per_1000),  # mean isn't the way to do this
+                      "quantity_per_1000" = mean(quantity_per_1000),
+                      "actual_cost_per_1000" = mean(actual_cost_per_1000)) %>% 
+            ungroup()
+        
             })
     
     df_for_map <- reactive({
-        shp_files %>% inner_join(df_for_bar())
-    })
+        shp_files %>% inner_join(df_for_bar(), by = c("gss_code" = "ccg_gss")) ## might be easier to just change format of data table
+        })
 
 
 # Render the data table ---------------------------------------------------
@@ -41,27 +49,27 @@ server <- function(input, output, session) {
     output$data_table <- DT::renderDataTable(df_small,
                                              filter = "top",
                                              options = list(autoWidth = TRUE,
-                                                            searching = FALSE,
+                                                            searching = TRUE,
                                                             columnDefs = list(list(width = '400px',
                                                                                    targets = 4))))
     
     # Check data filter function
-    output$test_table <- DT::renderDataTable(df_for_bar(),
+    output$test_table <- DT::renderDataTable(df2,
                                              filter = "top",
                                              options = list(autoWidth = TRUE,
-                                                            searching = FALSE,
+                                                            searching = TRUE,
                                                             columnDefs = list(list(width = '400px',
-                                                                                   targets = 4))))
+                                                                                   targets = 5))))
 
 # Create the leaflet map --------------------------------------------------
 
     
     output$mymap <- renderLeaflet({
-        data_shp_df %>% 
+        df_for_map() %>% 
             leaflet(options = leafletOptions(zoomDelta = 0.25,
                                              zoomSnap = 0.25)) %>% 
-            setView(lat = 53, 
-                    lng = -1.5, 
+            setView(lat = 53,
+                    lng = -1.5,
                     zoom = 6.75) %>%
             addProviderTiles(provider = "CartoDB.Positron") %>% 
             addPolygons(fillColor = ~pal(items_per_1000),

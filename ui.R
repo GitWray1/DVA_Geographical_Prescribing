@@ -11,7 +11,7 @@ library(leaflet)
 # Source in other files ---------------------------------------------------
 
 source("loading_data.R")
-source("global_functions.R")
+#source("global_functions.R")
 
 
 # Set up extra bits -------------------------------------------------------
