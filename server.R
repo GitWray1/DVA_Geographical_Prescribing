@@ -13,17 +13,19 @@ server <- function(input, output, session) {
     
     df_for_line <- reactive({
         
-        df %>% filter(chemical == input$medicine,
-                      area_type == input$area) %>% 
-            group_by(date, chemical, bnf_code, name, ods_code, gss_code) %>% 
-            summarise("registered_patients" = sum(registered_patients), 
-                      "items" = sum(items), 
-                      "quantity" = sum(quantity), 
-                      "actual_cost" = sum(actual_cost)) %>% 
-            ungroup() %>% 
-            mutate("items_per_1000" = (items/(registered_patients/1000)),
-                   "quantity_per_1000" = (quantity/(registered_patients/1000)),
-                   "actual_cost_per_1000" = (actual_cost/(registered_patients/1000)))
+        df_filt <- filter_for_line(df, input$medicine, input$area)
+        
+        # df %>% filter(chemical == input$medicine,
+        #               area_type == input$area) %>% 
+        #     group_by(date, chemical, bnf_code, name, ods_code, gss_code) %>% 
+        #     summarise("registered_patients" = sum(registered_patients), 
+        #               "items" = sum(items), 
+        #               "quantity" = sum(quantity), 
+        #               "actual_cost" = sum(actual_cost)) %>% 
+        #     ungroup() %>% 
+        #     mutate("items_per_1000" = (items/(registered_patients/1000)),
+        #            "quantity_per_1000" = (quantity/(registered_patients/1000)),
+        #            "actual_cost_per_1000" = (actual_cost/(registered_patients/1000)))
     })
 
     df_for_bar <- reactive({
@@ -70,7 +72,7 @@ server <- function(input, output, session) {
     observeEvent(c(df_for_map(), input$variable), {
         leafletProxy("mymap", data = df_for_map()) %>%
             clearShapes() %>%
-            addPolygons(fillColor = ~pal(df_for_map()[[input$variable]]),
+            addPolygons(fillColor = ~qpal(df_for_map()[[input$variable]]),
                         fillOpacity = 0.3,
                         color = "#393939",
                         weight = 1.5,
@@ -86,7 +88,7 @@ server <- function(input, output, session) {
                                                     style = list("font-family" = "Arial"))) %>%
             clearControls() %>%
             addLegend(position = "bottomleft",
-                      pal = pal,
+                      pal = qpal,
                       values = ~df_for_map()[[input$variable]],
                       title = input$variable,
                       opacity = 0.7)
@@ -98,8 +100,11 @@ server <- function(input, output, session) {
     output$line_chart <- renderPlotly({
 
         df_for_line() %>%
+            group_by(date) %>% 
+            mutate(mean_variable = mean(get(input$variable)),
+                   std_dev_variable = sd(get(input$variable, na.rm = TRUE))) %>% 
             plot_ly(x = ~date,
-                    y = ~round(get(input$variable),2),
+                    y = ~round(mean_variable, 2),
                     type = "scatter",
                     mode = "lines+markers",
                     color = ~input$medicine,
@@ -116,6 +121,8 @@ server <- function(input, output, session) {
                    legend = list(title = list(text = "Medicine"),
                                  x = 100,
                                  y = 0.5))
+        
+        # Work out how to add confidence intervals using plotly
     })
     
     # Note: if we want to use caching, RDT server must be set to False
