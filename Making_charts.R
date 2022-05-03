@@ -5,34 +5,8 @@ library(dplyr)
 library(leaflet)
 library(plotly) 
 
-# Import data -------------------------------------------------------------
-
-# File locations
-data_file <- "1_data_prep/output_files/DOACs_data.csv"
-shape_file <- "1_data_prep/output_files/simplified_geojsons/simplified_CCGs_(April_2021)_EN_BFC.geojson"
-
-# Read in data
-
-df <- readr::read_csv(data_file)
-
-# Read in CCG shapefile
-ccg_shape_df <- sf::st_read(shape_file, as_tibble = TRUE) %>%  
-                        select(-OBJECTID) %>% 
-                        janitor::clean_names()
 
 # Line chart - using plotly -----------------------------------------------
-
-# Filter for line chart 
-line_df <- df %>% 
-    select(date, chemical, registered_patients, items, quantity, actual_cost) %>% 
-    group_by(date, chemical) %>% 
-    summarise("nat_list_size" = sum(registered_patients),
-              "nat_items" = sum(items),
-              "nat_quantity" = sum(quantity),
-              "actual_cost" = sum(actual_cost)) %>% 
-    ungroup()
-
-# Create line chart
 
 line_df %>%
     plot_ly(x = ~date, 
@@ -57,22 +31,15 @@ line_df %>%
 
 # Bar chart ---------------------------------------------------------------
 
-# Filter for column chart
-col_df <- df %>% 
-    select(date, chemical, ccg_name, ccg_ods, ccg_gss, registered_patients, items, quantity, actual_cost) %>% 
-    filter(chemical == "Apixaban",
-           date == "2022-01-01")
-
-# Create chart
-col_df %>% 
-    plot_ly(x = ~reorder(ccg_ods, items),
+bar_chart_df %>% 
+    plot_ly(x = ~reorder(ods_code, items),
             y = ~items,
             type = "bar",
             hoverinfo = "text",
-            hovertext = paste0("Name: ", col_df$ccg_name,
-                               "<br>ODS code: ", col_df$ccg_ods,
-                               "<br>GSS code: ", col_df$ccg_gss,
-                               "<br>Items: ", col_df$items)) %>% 
+            hovertext = paste0("Name: ", bar_chart_df$name,
+                               "<br>ODS code: ", bar_chart_df$ods_code,
+                               "<br>GSS code: ", bar_chart_df$gss_code,
+                               "<br>Items: ", bar_chart_df$items)) %>% 
     layout(title = list(text = "<b>Example chart title</b>",
                         x = "0.1"),
            yaxis = list(title = "<b>Example Y-axis Title</b>",
@@ -84,17 +51,6 @@ col_df %>%
 
 
 # Create leaflet map ------------------------------------------------------
-
-# Join data to shapefiles dataframe
-data_shp_df <- left_join(ccg_shape_df, col_df,
-                         by = c("ccg21cd" = "ccg_gss",
-                                "ccg21nm" = "ccg_name")) %>% 
-                dplyr::rename("ccg_gss" = "ccg21cd",
-                              "ccg_name" = "ccg21nm") %>% 
-                mutate(items_per_1000 = items/(registered_patients/1000))
-
-# Set colour pallete to use
-pal <- colorNumeric("plasma", domain = NULL)
 
 # Create leaflet map - need to add legend and sort out labels 
 data_shp_df %>% 
@@ -113,7 +69,7 @@ data_shp_df %>%
                                               color = "#222222",
                                               fillOpacity = 0.7,
                                               bringToFront = TRUE),
-                label = ~lapply(paste0("<strong>Name: </strong>", data_shp_df$ccg_name,
+                label = ~lapply(paste0("<strong>Name: </strong>", data_shp_df$name,
                                        "<br><strong>Items per 1000:</strong> ", round(data_shp_df$items_per_1000, 2)), 
                                 htmltools::HTML),
                 labelOptions = labelOptions(textsize = "12px",

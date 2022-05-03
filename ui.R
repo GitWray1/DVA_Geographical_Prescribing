@@ -48,10 +48,10 @@ ui <- bootstrapPage(
                                                  "Select variable to plot",
                                                  choices = c("Items" = "items",
                                                              "Quantity" = "quantity",
-                                                             "Actual cost" = "actual_cost"),
-                                                             #"Items per 1000 registered people" = "items_per_1000",
-                                                             #"Quantity per 1000 registered people" = "quantity_per_1000",
-                                                             #"Actual cost per 1000 registered people" = "actual_cost_per_1000"),
+                                                             "Actual cost" = "actual_cost",
+                                                             "Items per 1000 people" = "items_per_1000",
+                                                             "Quantity per 1000 people" = "quantity_per_1000",
+                                                             "Actual cost per 1000 people" = "actual_cost_per_1000"),
                                                  selected = "items"),
                                     
                                      hr(),
@@ -62,6 +62,7 @@ ui <- bootstrapPage(
                                                                    "STP" = "stp", 
                                                                    "CCG" = "ccg"),
                                                        selected = "ccg",
+                                                       status = "primary",
                                                        size = "sm",
                                                        justified = TRUE),
                                      

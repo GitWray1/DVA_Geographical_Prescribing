@@ -6,16 +6,17 @@ library(dplyr)
 
 # Load in data ------------------------------------------------------------
 
-data_file <- "1_data_prep/output_files/DOACs_data.csv"
+#data_file <- "1_data_prep/output_files/DOACs_data.csv"
+data_file <- "1_data_prep/output_files/DOACs_data_long.csv"
 
 df <- readr::read_csv(data_file)
-df2 <- readr::read_csv("1_data_prep/output_files/DOACs_data_long.csv")
-
 
 # Load in shapefiles ------------------------------------------------------
 
 # Create list of file paths
-shape_files <- list.files(path= "1_data_prep/output_files/simplified_geojsons", pattern = "*.geojson", full.names = TRUE)
+shape_files <- list.files(path= "1_data_prep/output_files/simplified_geojsons", 
+                          pattern = "*.geojson", 
+                          full.names = TRUE)
 
 # Initialize shapefile dataframe
 shp_files <- tibble()
@@ -38,23 +39,30 @@ for (i in seq_along(shape_files)) {
 # Example data for data table tab
 df_small <- df %>% 
     mutate(date = format(date, "%b %Y")) %>% 
-    select(date, chemical, bnf_code, 
-           ccg_name, ccg_ods, ccg_gss, registered_patients, 
+    select(date, chemical, bnf_code, area_type, 
+           name, ods_code, gss_code, registered_patients, 
            items, quantity, actual_cost)
+
+# Example data for line chart 
+line_df <- df %>% 
+    filter(area_type == "ccg") %>% 
+    select(date, chemical, registered_patients, items, quantity, actual_cost) %>% 
+    group_by(date, chemical) %>% 
+    summarise("nat_list_size" = sum(registered_patients),
+              "nat_items" = sum(items),
+              "nat_quantity" = sum(quantity),
+              "actual_cost" = sum(actual_cost)) %>% 
+    ungroup()
 
 # Example data for bar chart
 bar_chart_df <- df %>%
-    select(date, chemical, ccg_name, ccg_ods, ccg_gss, registered_patients, items, quantity, actual_cost) %>% 
+    select(date, chemical, area_type, name, ods_code, gss_code, registered_patients, items, quantity, actual_cost) %>% 
     filter(chemical == "Apixaban",
-           date == "2022-01-01")
+           date == "2022-01-01",
+           area_type == "ccg")
 
 # Example data for leaflet output
-data_shp_df <- sf::st_read(shape_files[1], as_tibble = TRUE) %>%  
-    select(-OBJECTID) %>% 
-    janitor::clean_names() %>% 
-    left_join( bar_chart_df,
-               by = c("ccg21cd" = "ccg_gss",
-                      "ccg21nm" = "ccg_name")) %>% 
-    dplyr::rename("ccg_gss" = "ccg21cd",
-                  "ccg_name" = "ccg21nm") %>% 
+data_shp_df <- shp_files %>% 
+    filter(stringr::str_detect(name, "CCG")) %>% 
+    left_join(bar_chart_df) %>% 
     mutate(items_per_1000 = items/(registered_patients/1000))
