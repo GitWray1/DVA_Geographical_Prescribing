@@ -19,7 +19,7 @@ source("global_functions.R")
 
 # Set colour pallete to use
 pal <- colorNumeric("plasma", domain = NULL)
-qpal <- colorQuantile("plasma", domain = NULL, n = 5, na.color = "#808080")
+#qpal <- colorQuantile("plasma", domain = NULL, n = 5, na.color = "#808080")
 
 
 # Create Shiny UI ---------------------------------------------------------

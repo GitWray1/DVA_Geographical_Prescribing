@@ -13,19 +13,17 @@ server <- function(input, output, session) {
     
     df_for_line <- reactive({
         
-        df_filt <- filter_for_line(df, input$medicine, input$area)
-        
-        # df %>% filter(chemical == input$medicine,
-        #               area_type == input$area) %>% 
-        #     group_by(date, chemical, bnf_code, name, ods_code, gss_code) %>% 
-        #     summarise("registered_patients" = sum(registered_patients), 
-        #               "items" = sum(items), 
-        #               "quantity" = sum(quantity), 
-        #               "actual_cost" = sum(actual_cost)) %>% 
-        #     ungroup() %>% 
-        #     mutate("items_per_1000" = (items/(registered_patients/1000)),
-        #            "quantity_per_1000" = (quantity/(registered_patients/1000)),
-        #            "actual_cost_per_1000" = (actual_cost/(registered_patients/1000)))
+        df %>% filter(chemical == input$medicine,
+                      area_type == input$area) %>%
+              group_by(date, chemical, bnf_code, name, ods_code, gss_code) %>%
+              summarise("registered_patients" = sum(registered_patients),
+                        "items" = sum(items),
+                        "quantity" = sum(quantity),
+                        "actual_cost" = sum(actual_cost)) %>%
+              ungroup() %>%
+              mutate("items_per_1000" = (items/(registered_patients/1000)),
+                     "quantity_per_1000" = (quantity/(registered_patients/1000)),
+                     "actual_cost_per_1000" = (actual_cost/(registered_patients/1000)))
     })
 
     df_for_bar <- reactive({
@@ -34,13 +32,15 @@ server <- function(input, output, session) {
             filter(date >= input$date_range[1],
                    date <= input$date_range[2]) %>% 
             group_by(chemical, bnf_code, name, ods_code, gss_code) %>% 
-            summarise("items" = sum(items), 
+            summarise("registered_patients" = sum(registered_patients),
+                      "items" = sum(items), 
                       "quantity" = sum(quantity), 
-                      "actual_cost" = sum(actual_cost),
-                      "items_per_1000" = mean(items_per_1000),  # mean isn't the way to do this
-                      "quantity_per_1000" = mean(quantity_per_1000),
-                      "actual_cost_per_1000" = mean(actual_cost_per_1000)) %>% 
-            ungroup()
+                      "actual_cost" = sum(actual_cost)) %>% 
+            ungroup() %>% 
+            mutate("items_per_1000" = (items/(registered_patients/1000)),
+                   "quantity_per_1000" = (quantity/(registered_patients/1000)),
+                   "actual_cost_per_1000" = (actual_cost/(registered_patients/1000))) %>% 
+            select(-registered_patients)
 
             })
 
@@ -72,7 +72,7 @@ server <- function(input, output, session) {
     observeEvent(c(df_for_map(), input$variable), {
         leafletProxy("mymap", data = df_for_map()) %>%
             clearShapes() %>%
-            addPolygons(fillColor = ~qpal(df_for_map()[[input$variable]]),
+            addPolygons(fillColor = ~pal(df_for_map()[[input$variable]]),
                         fillOpacity = 0.3,
                         color = "#393939",
                         weight = 1.5,
@@ -88,7 +88,7 @@ server <- function(input, output, session) {
                                                     style = list("font-family" = "Arial"))) %>%
             clearControls() %>%
             addLegend(position = "bottomleft",
-                      pal = qpal,
+                      pal = pal,
                       values = ~df_for_map()[[input$variable]],
                       title = input$variable,
                       opacity = 0.7)
@@ -100,9 +100,13 @@ server <- function(input, output, session) {
     output$line_chart <- renderPlotly({
 
         df_for_line() %>%
-            group_by(date) %>% 
-            mutate(mean_variable = mean(get(input$variable)),
-                   std_dev_variable = sd(get(input$variable, na.rm = TRUE))) %>% 
+            group_by(date, chemical, bnf_code) %>% 
+            summarise(mean_variable = mean(get(input$variable), na.rm = TRUE),
+                      sd_variable = sd(get(input$variable), na.rm = TRUE),
+                      n_variable = n()) %>% 
+            mutate(se_variable = sd_variable/sqrt(n_variable),
+                   lower_ci = mean_variable - qt(1 - (0.05/2), n_variable - 1) * se_variable,
+                   upper_ci = mean_variable + qt(1 - (0.05/2), n_variable - 1) * se_variable) %>% 
             plot_ly(x = ~date,
                     y = ~round(mean_variable, 2),
                     type = "scatter",
@@ -121,9 +125,60 @@ server <- function(input, output, session) {
                    legend = list(title = list(text = "Medicine"),
                                  x = 100,
                                  y = 0.5))
-        
+
         # Work out how to add confidence intervals using plotly
     })
     
     # Note: if we want to use caching, RDT server must be set to False
 }
+
+temp <- df %>% filter(chemical == "Apixaban",
+               area_type == "ccg") %>%
+    group_by(date, chemical, bnf_code, name, ods_code, gss_code) %>%
+    summarise("registered_patients" = sum(registered_patients),
+              "items" = sum(items),
+              "quantity" = sum(quantity),
+              "actual_cost" = sum(actual_cost)) %>%
+    ungroup() %>%
+    mutate("items_per_1000" = (items/(registered_patients/1000)),
+           "quantity_per_1000" = (quantity/(registered_patients/1000)),
+           "actual_cost_per_1000" = (actual_cost/(registered_patients/1000)))
+
+temp %>% group_by(date, chemical, bnf_code) %>% 
+    summarise(mean_variable = mean(items, na.rm = TRUE),
+              sd_variable = sd(items, na.rm = TRUE),
+              n_variable = n()) %>% 
+    ungroup() %>% 
+    mutate(se_variable = sd_variable/sqrt(n_variable),
+           lower_ci = mean_variable - qt(1 - (0.05/2), n_variable - 1) * se_variable,
+           upper_ci = mean_variable + qt(1 - (0.05/2), n_variable - 1) * se_variable) %>%
+    plot_ly(x = ~date,
+            y = ~round(mean_variable, 2),
+            type = "scatter",
+            mode = "lines",
+            line = list(color = "#004650"),
+            name = 'Mean') %>%
+    add_trace(y = ~round(upper_ci, 2), 
+              mode = "lines",
+              line = list(color = 'transparent'),
+              showlegend = FALSE,
+              name = 'Upper 95% CI') %>% 
+    add_trace(y = ~round(lower_ci, 2), 
+              mode = "lines",
+              line = list(color = 'transparent'),
+              fill = 'tonexty', fillcolor='rgba(57,57,57,0.2)',
+              showlegend = FALSE,
+              name = 'Lower 95% CI') %>% 
+    layout(title = list(text = "<b>Example chart title</b>",
+                        x = 0.1),
+           yaxis = list(title = "<b>Example Y-axis Title</b>",
+                        tickformat = ",",
+                        rangemode = "tozero"),
+           xaxis = list(title = FALSE,
+                        type = 'date',
+                        tickformat = "%b<br>%Y"),
+           hovermode = "x unified",
+           legend = list(title = list(text = "Medicine"),
+                         x = 100,
+                         y = 0.5))
+    
