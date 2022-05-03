@@ -3,14 +3,29 @@
 
 library(dplyr)
 library(leaflet)
-library(plotly) 
+library(plotly)
+
+
 
 
 # Line chart - using plotly -----------------------------------------------
 
+line_df <- df %>% filter(chemical == "Apixaban",
+                      area_type == "region") %>% 
+                  group_by(date, chemical, bnf_code, name, ods_code, gss_code) %>% 
+                  summarise("registered_patients" = sum(registered_patients),
+                            "items" = sum(items), 
+                            "quantity" = sum(quantity), 
+                            "actual_cost" = sum(actual_cost)) %>% 
+                  ungroup() %>% 
+                  mutate("items_per_1000" = (items/(registered_patients/1000)),
+                         "quantity_per_1000" = (quantity/(registered_patients/1000)),
+                         "actual_cost_per_1000" = (actual_cost/(registered_patients/1000)))
+
+
 line_df %>%
     plot_ly(x = ~date, 
-            y = ~nat_items, 
+            y = ~items_per_1000,
             type = "scatter", 
             mode = "lines+markers",
             color = ~chemical,

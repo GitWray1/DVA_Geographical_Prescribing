@@ -6,18 +6,20 @@ library(shiny)
 library(shinyWidgets)
 library(shinythemes)
 library(leaflet)
+library(plotly)
 
 
 # Source in other files ---------------------------------------------------
 
 source("loading_data.R")
-#source("global_functions.R")
+source("global_functions.R")
 
 
 # Set up extra bits -------------------------------------------------------
 
 # Set colour pallete to use
 pal <- colorNumeric("plasma", domain = NULL)
+#qpal <- colorQuantile("plasma", domain = NULL, n = 5, na.color = "#808080")
 
 
 # Create Shiny UI ---------------------------------------------------------
@@ -89,15 +91,24 @@ ui <- bootstrapPage(
                                                    format = "M yyyy"),
                                     
                                     hr()
-                       ))),
+                       ),
+                       
+                       absolutePanel(id = "outputpanel", class = "panel panel-default", fixed = TRUE,
+                                      draggable = TRUE, height = "auto", width = "600",
+                                      top = 75, bottom = "auto", left = "auto", right = "25",
+                                     
+                                     plotlyOutput("line_chart", height = "auto", width = "auto"),
+                                     
+                                     hr(),
+                                     
+                                     plotlyOutput("bar_chart", height = "auto", width = "auto"))
+                       
+                       )),
           
           tabPanel("Data",
                    DT::dataTableOutput("data_table"),
                    downloadButton("full_csv_download",
                                   "Download as CSV")),
-          
-          tabPanel("Data test",
-                   DT::dataTableOutput("test_table")),
           
           tabPanel("About this dashboard",
                    includeMarkdown("about.rmd"))
