@@ -37,7 +37,7 @@ ui <- bootstrapPage(
                        
                        absolutePanel(id = "filterpanel", class = "panel panel-default", fixed = TRUE,
                                      draggable = TRUE, height = "auto", width = "270",
-                                     top = 100, bottom = "auto", left = "50", right = "auto",
+                                     top = "150", bottom = "auto", left = "40", right = "auto",
                                      
                                      selectInput("medicine", 
                                                  "Select medicine",
@@ -83,25 +83,25 @@ ui <- bootstrapPage(
                                     
                                     hr(),
                                         
-                                    dateRangeInput("date_range3",
-                                                   "Select date range",
-                                                   start = lubridate::as_date(min(df$date)),
-                                                   end = lubridate::as_date(max(df$date)),
-                                                   startview = "year",
-                                                   format = "M yyyy"),
-                                    
-                                    hr()
+                                    # dateRangeInput("date_range3",
+                                    #                "Select date range",
+                                    #                start = lubridate::as_date(min(df$date)),
+                                    #                end = lubridate::as_date(max(df$date)),
+                                    #                startview = "year",
+                                    #                format = "M yyyy"),
+                                    # 
+                                    # hr()
                        ),
                        
                        absolutePanel(id = "outputpanel", class = "panel panel-default", fixed = TRUE,
-                                      draggable = TRUE, height = "auto", width = "600",
-                                      top = 75, bottom = "auto", left = "auto", right = "25",
+                                      draggable = TRUE, height = "auto", width = "500",
+                                      top = 70, bottom = "auto", left = "auto", right = "10",
                                      
-                                     plotlyOutput("line_chart", height = "auto", width = "auto"),
+                                     plotlyOutput("line_chart", height = "300px", width = "auto"),
                                      
                                      hr(),
                                      
-                                     plotlyOutput("bar_chart", height = "auto", width = "auto"))
+                                     plotlyOutput("bar_chart", height = "300px", width = "auto"))
                        
                        )),
           
