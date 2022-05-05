@@ -94,12 +94,20 @@ ui <- bootstrapPage(
                        ),
                        
                        absolutePanel(id = "outputpanel", class = "panel panel-default", fixed = TRUE,
-                                      draggable = TRUE, height = "auto", width = "500",
+                                      draggable = TRUE, height = "auto", width = "600",
                                       top = 70, bottom = "auto", left = "auto", right = "10",
+                                     
+                                     h4("Use the left panel to select parameters for plotting"),
+                                     
+                                     h5("Click on an area for further details "),
+                                     
+                                     br(),
                                      
                                      plotlyOutput("line_chart", height = "300px", width = "auto"),
                                      
                                      hr(),
+                                     
+                                     #br(),
                                      
                                      plotlyOutput("bar_chart", height = "300px", width = "auto"))
                        

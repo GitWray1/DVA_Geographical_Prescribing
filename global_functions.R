@@ -23,10 +23,6 @@ filter_for_line <- function(df, medicine_input, area_input){
     return(temp)
 }
 
-median_center <- function(x) {
-    apply(x, 2, function(y) y - median(y))
-}
-
 # Functions to make bar chart ---------------------------------------------
 
 #filter_for_bar <- function(df, ){}

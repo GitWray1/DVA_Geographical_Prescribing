@@ -121,8 +121,12 @@ server <- function(input, output, session) {
                         fillcolor = 'rgba(0,70,80,0.2)',
                         line = list(color = 'transparent'),
                         marker = list(color = "transparent"),
-                        name = '95% Confidence interval') %>% 
-            layout(yaxis = list(title = "<b>Example Y-axis Title</b>",
+                        name = '95% Confidence interval',
+                        hoverinfo = "none"
+                        ) %>% 
+            layout(#title = list(text = "<b>Prescribing over 5 years in England</b>",
+                   #            x = 0.1),
+                   yaxis = list(title = "<b>Example Y-axis Title</b>",
                                 tickformat = ",",
                                 rangemode = "tozero"),
                    xaxis = list(title = FALSE,
@@ -141,8 +145,7 @@ server <- function(input, output, session) {
     
     output$bar_chart <- renderPlotly({
         
-        df_for_bar() %>% 
-            #mutate(median_centred = items - median(items)) %>% 
+        df_for_bar() %>%
             plot_ly(x = ~reorder(ods_code, get(input$variable)),
                     y = ~get(input$variable),
                     type = "bar",
@@ -150,15 +153,34 @@ server <- function(input, output, session) {
                     hovertext = paste0("Name: ", df_for_bar()$name,
                                        "<br>ODS code: ", df_for_bar()$ods_code,
                                        "<br>GSS code: ", df_for_bar()$gss_code,
-                                       "<br>Items: ", df_for_bar()$items)) %>% 
+                                       "<br>Items: ", round(df_for_bar()[[input$variable]], 2)),
+                    showlegend = FALSE,
+                    color = I("#004650"),
+                    alpha = 0.6) %>%
+            add_lines(y = ~median(get(input$variable), na.rm = TRUE),
+                      name = "National Median",
+                      line = list(dash = 'dot',
+                                  width = 2,
+                                  color = "#393939"),
+                      hovertext = paste0("National Median: ", median(df_for_bar()[[input$variable]]))) %>%
+            add_annotations(xref = "paper",
+                            yref ="y",
+                            x = 0.05,
+                            y = median(median(df_for_bar()[[input$variable]]), na.rm = TRUE)*1.3,
+                            text = "<b>National median</b>",
+                            showarrow = FALSE,
+                            font = list(color = '#393939',
+                                        size = 12)) %>% 
             layout(yaxis = list(title = "<b>Example Y-axis Title</b>",
                                 tickformat = ",",
                                 rangemode = "tozero"),
                    xaxis = list(title = FALSE,
                                 showticklabels = FALSE),
                    hovermode = "x unified")
+ 
     })
     
+
     
     # Note: if we want to use caching, RDT server must be set to False
 }
@@ -176,23 +198,23 @@ server <- function(input, output, session) {
 #            "actual_cost_per_1000" = (actual_cost/(registered_patients/1000)))
 # 
 # 
-# bar_temp <- temp %>% 
+# bar_temp <- temp %>%
 #     filter(date >= "2020-01-01",
-#            date <= "2021-01-01") %>% 
-#     group_by(chemical, bnf_code, name, ods_code, gss_code) %>% 
+#            date <= "2021-01-01") %>%
+#     group_by(chemical, bnf_code, name, ods_code, gss_code) %>%
 #     summarise("registered_patients" = sum(registered_patients),
-#               "items" = sum(items), 
-#               "quantity" = sum(quantity), 
-#               "actual_cost" = sum(actual_cost)) %>% 
-#     ungroup() %>% 
+#               "items" = sum(items),
+#               "quantity" = sum(quantity),
+#               "actual_cost" = sum(actual_cost)) %>%
+#     ungroup() %>%
 #     mutate("items_per_1000" = (items/(registered_patients/1000)),
 #            "quantity_per_1000" = (quantity/(registered_patients/1000)),
-#            "actual_cost_per_1000" = (actual_cost/(registered_patients/1000))) %>% 
+#            "actual_cost_per_1000" = (actual_cost/(registered_patients/1000))) %>%
 #     select(-registered_patients)
 # 
 # 
-# bar_temp %>% 
-#     #mutate(median_centred = items - median(items)) %>% 
+# bar_temp %>%
+#     #mutate(median_centred = items - median(items)) %>%
 #     plot_ly(x = ~reorder(ods_code, items),
 #             y = ~items,
 #             type = "bar",
@@ -200,11 +222,54 @@ server <- function(input, output, session) {
 #             hovertext = paste0("Name: ", bar_chart_df$name,
 #                                "<br>ODS code: ", bar_chart_df$ods_code,
 #                                "<br>GSS code: ", bar_chart_df$gss_code,
-#                                "<br>Items: ", bar_chart_df$items)) %>% 
+#                                "<br>Items: ", bar_chart_df$items)) %>%
+#     layout(yaxis = list(title = "<b>Example Y-axis Title</b>",
+#                         tickformat = ",",
+#                         rangemode = "tozero"),
+#            xaxis = list(title = FALSE,
+#                         showticklabels = FALSE),
+#            hovermode = "x unified",
+#            shapes=list(type='line',
+#                        xref = "paper",
+#                        x0= 0,
+#                        x1= 1,
+#                        yref = "y",
+#                        y0 = ~median(items, na.rm = TRUE),
+#                        y1 = ~median(items, na.rm = TRUE),
+#                        line=list(dash='dot',
+#                                  width=2),
+#                        name = "test"),
+#            legend = list(x = 0.01,
+#                          y = 0.99))
+# 
+# bar_temp %>%
+#     #mutate(median_centred = items - median(items)) %>%
+#     plot_ly(x = ~reorder(ods_code, items),
+#             y = ~items,
+#             type = "bar",
+#             hoverinfo = "text",
+#             hovertext = paste0("Name: ", bar_temp$name,
+#                                "<br>ODS code: ", bar_temp$ods_code,
+#                                "<br>GSS code: ", bar_temp$gss_code,
+#                                "<br>Items: ", bar_temp$items),
+#             showlegend = FALSE,
+#             color = I("#004650"),
+#             alpha = 0.6) %>%
+#     add_lines(y = ~median(items, na.rm = TRUE),
+#               name = "National Median",
+#               line = list(dash = 'dot',
+#                           width = 2,
+#                           color = "#393939"),
+#               hovertext = paste0("National Median: ", median(bar_temp$items, na.rm = TRUE))) %>%
+#     add_annotations(xref = "paper",
+#                     yref ="y",
+#                     x = 0.05,
+#                     y = median(bar_temp$items, na.rm = TRUE)*1.15,
+#                     text = "<b>National median</b>",
+#                     showarrow = FALSE) %>% 
 #     layout(yaxis = list(title = "<b>Example Y-axis Title</b>",
 #                         tickformat = ",",
 #                         rangemode = "tozero"),
 #            xaxis = list(title = FALSE,
 #                         showticklabels = FALSE),
 #            hovermode = "x unified")
-
