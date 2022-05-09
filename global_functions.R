@@ -23,10 +23,57 @@ filter_for_line <- function(df, medicine_input, area_input){
     return(temp)
 }
 
-# Functions to make bar chart ---------------------------------------------
 
-#filter_for_bar <- function(df, ){}
+# Function to make text output --------------------------------------------
 
-# Functions to make map ---------------------------------------------------
 
-# filter_for_map <- function(df, ){}
+
+# create_text_output <- function(df, medicine, date_range, variable, rv){
+#     
+# if (!is.null(rv$val)){ # area selected
+#     
+#     start_val <- df %>% filter(ods_code == rv$val,
+#                                  date == date_range[1]) %>% 
+#                           select(variable) %>% as.double()
+#     end_val <- df %>% filter(ods_code == rv$val,
+#                       date == date_range[2]) %>% 
+#                       select(variable) %>% as.double()
+#     sum_over_period <- df %>% filter(ods_code == rv$val,
+#                                      date >= date_range[1],
+#                                      date <= date_range[2]) %>% 
+#                               
+#     nat_avg_sum_over_period <- 
+#     area <- rv$val
+#     
+#     temp <- paste0("The ", variable, " of ", medicine, " prescribed in ", area, " ", 
+#                    change_direction, " ", change_percent, "% between ", date1,
+#                    " and ", date2, ".")
+#     
+# } else { # no area selected
+#     
+#     temp <- paste0("The ", variable, " of ", medicine, " prescribed in England ", 
+#                    change_direction, " ", change_percent, "% between ", date1,
+#                    " and ", date2, ".")
+# }
+#     med <- "Apixaban"
+#     var <- 
+#     change_direction <- "increased"
+#     change_percent <- "8"
+#     area <- "England"
+#     date1 <- format(lubridate::as_date("2020-01-01"), "%b %Y")
+#     date2 <- format(lubridate::as_date("2021-01-01"), format = "%b %Y")
+#     
+#     temp <- paste0("The ", variable, " of ", medicine, " prescribed in ", area, " ", 
+#                    change_direction, " ", change_percent, "% between ", date1,
+#                    " and ", date2, ".")
+#     return(temp)
+# }
+
+
+# e.g.The [variable] of [drug name] prescribed in [selected area] [increased/decreased] 
+# [x]% between [date 1] and [date2]. Total prescribing was across this period [x]% [above/below] 
+# the national average. 
+
+# The items of Apixaban prescribed between ...
+# The quantity of Apixaban prescribed between ...
+# The items per 1000 population of Apixaban prescribed in  ...

@@ -103,6 +103,8 @@ ui <- bootstrapPage(
                                      
                                      br(),
                                      
+                                     htmlOutput("infotext"),
+                                     
                                      plotlyOutput("line_chart", height = "300px", width = "auto"),
                                      
                                      hr(),

@@ -114,6 +114,9 @@ server <- function(input, output, session) {
                     mode = "lines+markers",
                     line = list(color = "#004650"),
                     name = 'National Average',
+                    #hoverinfo = "text",
+                    #hovertext = ~paste0("Date: ",format(date, format = "%b %Y"),
+                    #                    "<br>Value: ", round(mean_variable,2)),
                     marker = list(color = "#004650",
                                 size = 4)) %>%
             add_ribbons(ymin = ~round(lower_ci, 2),
@@ -122,8 +125,7 @@ server <- function(input, output, session) {
                         line = list(color = 'transparent'),
                         marker = list(color = "transparent"),
                         name = '95% Confidence interval',
-                        hoverinfo = "none"
-                        ) %>% 
+                        hoverinfo = "none") %>% 
             layout(#title = list(text = "<b>Prescribing over 5 years in England</b>",
                    #            x = 0.1),
                    yaxis = list(title = "<b>Example Y-axis Title</b>",
@@ -133,8 +135,13 @@ server <- function(input, output, session) {
                                 type = 'date',
                                 tickformat = "%b<br>%Y"),
                    hovermode = "x unified",
-                   legend = list(x = 0.01,
-                                 y = 0.99))
+                   legend = list(xanchor = "center",
+                                 x = 0.5,
+                                 y = 1.05,
+                                 orientation = "h",
+                                 bgcolor = "rgba(255,255,255,0.2)")) %>% 
+            config(displaylogo = FALSE,
+                   modeBarButtonsToRemove = c("zoom", "pan", "select", "lasso"))
         
     })
     
@@ -176,14 +183,22 @@ server <- function(input, output, session) {
                                 rangemode = "tozero"),
                    xaxis = list(title = FALSE,
                                 showticklabels = FALSE),
-                   hovermode = "x unified")
+                   hovermode = "x unified") %>% 
+            config(displaylogo = FALSE,
+                   modeBarButtonsToRemove = c("zoom", "pan", "select", "lasso"))
  
     })
     
-
+    output$infotext <- renderText({"The <b>[variable]</b> of <b>[drug]</b> 
+        prescribed in <b>[area] [increased/decreased]</b> <b>[x]%</b> between 
+        <b>[date 1]</b> and <b>[date2]</b>. Average monthly prescribing across 
+        this period was <b>[x]% [above/below]</b> the national average."})
     
     # Note: if we want to use caching, RDT server must be set to False
 }
+
+
+
 
 # temp <- df %>% filter(chemical == "Apixaban",
 #                area_type == "ccg") %>%
@@ -273,3 +288,8 @@ server <- function(input, output, session) {
 #            xaxis = list(title = FALSE,
 #                         showticklabels = FALSE),
 #            hovermode = "x unified")
+
+
+
+
+
