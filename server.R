@@ -8,19 +8,20 @@ library(dplyr)
 
 server <- function(input, output, session) {
     
-
+    output$testtext <- renderText(as.character(rv$click))
+    
 # Filter the data according to user input ---------------------------------
     
     df_for_line <- reactive({
         
         df %>% filter(chemical == input$medicine,
                       area_type == input$area) %>%
-              group_by(date, chemical, bnf_code, name, ods_code, gss_code) %>%
-              summarise("registered_patients" = sum(registered_patients),
-                        "items" = sum(items),
-                        "quantity" = sum(quantity),
-                        "actual_cost" = sum(actual_cost)) %>%
-              ungroup() %>%
+              # group_by(date, chemical, bnf_code, name, ods_code, gss_code) %>%
+              # summarise("registered_patients" = sum(registered_patients),
+              #           "items" = sum(items),
+              #           "quantity" = sum(quantity),
+              #           "actual_cost" = sum(actual_cost)) %>%
+              # ungroup() %>%
               mutate("items_per_1000" = (items/(registered_patients/1000)),
                      "quantity_per_1000" = (quantity/(registered_patients/1000)),
                      "actual_cost_per_1000" = (actual_cost/(registered_patients/1000)))
@@ -58,6 +59,44 @@ server <- function(input, output, session) {
                                                             columnDefs = list(list(width = '400px',
                                                                                    targets = 5))))
 
+# Create reactive values for charts ---------------------------------------
+
+    # Set up reactive values to store variables
+    rv <- reactiveValues(click = NULL)
+
+    # Update Y axis title and store as reactive variable for use in plots
+    observeEvent(input$variable, {
+        rv$yaxis <- get_y_title(input$variable)
+        })
+    
+    # Update line chart title and store as reactive variable
+    observeEvent(c(rv$yaxis, input$medicine), {
+        rv$line_title <- get_line_title(rv$yaxis, input$medicine)
+        })
+    
+    # Update line chart title and store as reactive variable
+    observeEvent(c(rv$yaxis, input$medicine, input$area, input$date_range), {
+        rv$bar_title <- get_bar_title(rv$yaxis, input$medicine, input$area, input$date_range)
+        })
+    
+    # Asign the clicked shape ID to the reactive variable rv$click
+    observeEvent(input$mymap_shape_click, {
+        rv$click <- input$mymap_shape_click
+        })
+    
+    # Set up the button to return figures to national levels
+    output$clear_click <- renderUI({
+        if (!is.null(rv$click)) {
+            actionButton("reset", "Remove area")
+        }
+    })
+    
+    # When the reset button is clicked return the rv$click value to NULL
+    observeEvent(input$reset, {
+        rv$click <- NULL
+    })
+    
+    
 # Create the leaflet map --------------------------------------------------
 
     output$mymap <- renderLeaflet({
@@ -77,6 +116,7 @@ server <- function(input, output, session) {
                         color = "#393939",
                         weight = 1.5,
                         opacity = 1,
+                        layerId = ~ods_code,
                         highlight = highlightOptions(weight = 3,
                                                      color = "#222222",
                                                      fillOpacity = 0.7,
@@ -90,16 +130,62 @@ server <- function(input, output, session) {
             addLegend(position = "bottomleft",
                       pal = pal,
                       values = ~df_for_map()[[input$variable]],
-                      title = input$variable,
+                      title = rv$yaxis,
                       opacity = 0.7)
     })
     
 
 # Create the line chart ---------------------------------------------------
 
+    # output$line_chart <- renderPlotly({
+    # 
+    #     df_for_line() %>%
+    #         group_by(date, chemical, bnf_code) %>% 
+    #         summarise(mean_variable = mean(get(input$variable), na.rm = TRUE),
+    #                   sd_variable = sd(get(input$variable), na.rm = TRUE),
+    #                   n_variable = n()) %>% 
+    #         ungroup() %>% 
+    #         mutate(se_variable = sd_variable/sqrt(n_variable),
+    #                lower_ci = mean_variable - qt(1 - (0.05/2), n_variable - 1) * se_variable,
+    #                upper_ci = mean_variable + qt(1 - (0.05/2), n_variable - 1) * se_variable) %>%
+    #         plot_ly(x = ~date,
+    #                 y = ~round(mean_variable, 2),
+    #                 type = "scatter",
+    #                 mode = "lines+markers",
+    #                 line = list(color = "#004650"),
+    #                 name = 'National Average',
+    #                 marker = list(color = "#004650",
+    #                             size = 4)) %>%
+    #         add_ribbons(ymin = ~round(lower_ci, 2),
+    #                     ymax = ~round(upper_ci, 2),
+    #                     fillcolor = 'rgba(0,70,80,0.2)',
+    #                     line = list(color = 'transparent'),
+    #                     marker = list(color = "transparent"),
+    #                     name = '95% Confidence interval',
+    #                     hoverinfo = "none") %>% 
+    #         layout(yaxis = list(title = rv$yaxis,
+    #                             tickformat = ",",
+    #                             rangemode = "tozero"),
+    #                xaxis = list(title = FALSE,
+    #                             type = 'date',
+    #                             tickformat = "%b<br>%Y"),
+    #                hovermode = "x unified",
+    #                legend = list(xanchor = "center",
+    #                              x = 0.5,
+    #                              y = 1.05,
+    #                              orientation = "h",
+    #                              bgcolor = "rgba(255,255,255,0.2)"),
+    #                title = list(text = stringr::str_wrap(paste0("<b>", rv$line_title,"</b>"), width = 80),
+    #                             font = list(size = 12),
+    #                             x = 0.05)) %>% 
+    #         config(displaylogo = FALSE,
+    #                modeBarButtonsToRemove = c("zoom", "pan", "select", "lasso"))
+    #     
+    # })
+    
     output$line_chart <- renderPlotly({
-
-        df_for_line() %>%
+        
+       p <- df_for_line() %>%
             group_by(date, chemical, bnf_code) %>% 
             summarise(mean_variable = mean(get(input$variable), na.rm = TRUE),
                       sd_variable = sd(get(input$variable), na.rm = TRUE),
@@ -114,11 +200,8 @@ server <- function(input, output, session) {
                     mode = "lines+markers",
                     line = list(color = "#004650"),
                     name = 'National Average',
-                    #hoverinfo = "text",
-                    #hovertext = ~paste0("Date: ",format(date, format = "%b %Y"),
-                    #                    "<br>Value: ", round(mean_variable,2)),
                     marker = list(color = "#004650",
-                                size = 4)) %>%
+                                  size = 4)) %>%
             add_ribbons(ymin = ~round(lower_ci, 2),
                         ymax = ~round(upper_ci, 2),
                         fillcolor = 'rgba(0,70,80,0.2)',
@@ -126,9 +209,7 @@ server <- function(input, output, session) {
                         marker = list(color = "transparent"),
                         name = '95% Confidence interval',
                         hoverinfo = "none") %>% 
-            layout(#title = list(text = "<b>Prescribing over 5 years in England</b>",
-                   #            x = 0.1),
-                   yaxis = list(title = "<b>Example Y-axis Title</b>",
+            layout(yaxis = list(title = rv$yaxis,
                                 tickformat = ",",
                                 rangemode = "tozero"),
                    xaxis = list(title = FALSE,
@@ -139,17 +220,40 @@ server <- function(input, output, session) {
                                  x = 0.5,
                                  y = 1.05,
                                  orientation = "h",
-                                 bgcolor = "rgba(255,255,255,0.2)")) %>% 
+                                 bgcolor = "rgba(255,255,255,0.2)"),
+                   title = list(text = stringr::str_wrap(paste0("<b>", rv$line_title,"</b>"), width = 80),
+                                font = list(size = 12),
+                                x = 0.05)) %>% 
             config(displaylogo = FALSE,
                    modeBarButtonsToRemove = c("zoom", "pan", "select", "lasso"))
         
+       if (!is.null(rv$click)) {
+           
+           temp_df <- df_for_line() %>% 
+                            filter(ods_code == rv$click)
+           
+           p %>% 
+               add_trace(data = temp_df,
+                         y = ~items,
+                         type = "scatter",
+                         mode = "lines+markers",
+                         line = list(color = "#D5824D"),
+                         connectgaps = TRUE,
+                         name = "test title",
+                         marker = list(color = "#D5824D",
+                                       size = 4))
+               
+       } else {
+           
+           p
+       }
+       
     })
-    
     
 
 # Create the bar chart ----------------------------------------------------
 
-    
+    # Use plotly proxy?
     output$bar_chart <- renderPlotly({
         
         df_for_bar() %>%
@@ -173,17 +277,21 @@ server <- function(input, output, session) {
             add_annotations(xref = "paper",
                             yref ="y",
                             x = 0.05,
-                            y = median(median(df_for_bar()[[input$variable]]), na.rm = TRUE)*1.3,
+                            y = median(df_for_bar()[[input$variable]], na.rm = TRUE),
+                            yshift = 9,
                             text = "<b>National median</b>",
                             showarrow = FALSE,
                             font = list(color = '#393939',
                                         size = 12)) %>% 
-            layout(yaxis = list(title = "<b>Example Y-axis Title</b>",
+            layout(yaxis = list(title = rv$yaxis,
                                 tickformat = ",",
                                 rangemode = "tozero"),
                    xaxis = list(title = FALSE,
                                 showticklabels = FALSE),
-                   hovermode = "x unified") %>% 
+                   hovermode = "x unified",
+                   title = list(text = stringr::str_wrap(paste0("<b>", rv$bar_title,"</b>"), width = 80),
+                                font = list(size = 12),
+                                x = 0.05)) %>% 
             config(displaylogo = FALSE,
                    modeBarButtonsToRemove = c("zoom", "pan", "select", "lasso"))
  
@@ -200,7 +308,7 @@ server <- function(input, output, session) {
 
 
 
-# temp <- df %>% filter(chemical == "Apixaban",
+# temp_df <- df %>% filter(chemical == "Apixaban",
 #                area_type == "ccg") %>%
 #     group_by(date, chemical, bnf_code, name, ods_code, gss_code) %>%
 #     summarise("registered_patients" = sum(registered_patients),

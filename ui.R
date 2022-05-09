@@ -15,13 +15,6 @@ source("loading_data.R")
 source("global_functions.R")
 
 
-# Set up extra bits -------------------------------------------------------
-
-# Set colour pallete to use
-pal <- colorNumeric("plasma", domain = NULL)
-#qpal <- colorQuantile("plasma", domain = NULL, n = 5, na.color = "#808080")
-
-
 # Create Shiny UI ---------------------------------------------------------
 
 ui <- bootstrapPage(
@@ -82,6 +75,8 @@ ui <- bootstrapPage(
                                                          autoClose = TRUE),
                                     
                                     hr(),
+                                    
+                                    textOutput("testtext"),
                                         
                                     # dateRangeInput("date_range3",
                                     #                "Select date range",
@@ -101,17 +96,17 @@ ui <- bootstrapPage(
                                      
                                      h5("Click on an area for further details "),
                                      
-                                     br(),
-                                     
                                      htmlOutput("infotext"),
+                                     
+                                     #br(),
                                      
                                      plotlyOutput("line_chart", height = "300px", width = "auto"),
                                      
                                      hr(),
                                      
-                                     #br(),
+                                     plotlyOutput("bar_chart", height = "300px", width = "auto"),
                                      
-                                     plotlyOutput("bar_chart", height = "300px", width = "auto"))
+                                     uiOutput("clear_click", align = "center"))
                        
                        )),
           
