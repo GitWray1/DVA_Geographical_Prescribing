@@ -71,47 +71,82 @@ get_bar_title <- function(rv_var, input_med, input_area, input_dates){
                    " and ", date2, " by ", input_area)
     return(temp)
 }
+# use format date function for above
 
 # Creating the reactive text output
 
-# create_text_output <- function(df, input_med, date_range, variable, rv){
-# 
-#     date1 <- format_date(date_range[1], "%b %Y")
-#     date2 <- format_date(date_range[2], "%b %Y")
-# 
-# 
-#     if (is.null(click_event)){ # No area selected
-# 
-#         temp_df <- 
-#         start_val <-
-#         end_val <-
-#         diff_percentage <- (end_val/start_val-1)*100
-#         change_direction <- case_when(
-#                                 diff_percentage > 0 ~ "increased",
-#                                 diff_percentage < 0 ~ "decreased",
-#                                 TRUE ~ "didn't change")
-# 
-#         temp <- paste0("The ", rv$yaxis, " of ", input_med, "prescribed in England", change_direction,
-#                        " by ", diff_percentage, "% between ", date1, " and ", date2, ".")
-# 
-# 
-#     } else { # Area selected
-# 
-#     }
-# 
-#     return(temp)
-# }
+create_text_output <- function(df, input_med, date_range, input_variable, rv){
+
+    date1 <- format_date(date_range[1])
+    date2 <- format_date(date_range[2])
 
 
-# e.g.The [variable] of [drug name] prescribed in [selected area] [increased/decreased] 
-# [x]% between [date 1] and [date2]. Total prescribing across this period was [x]% [above/below] 
-# the national average. 
+    if (is.null(rv$click)){ # No area selected
+
+        temp_df <- df %>% filter(date >= date_range[1],
+                                 date <= date_range[2]) %>% 
+            group_by(date) %>% 
+            summarise(across(c(registered_patients, items, quantity, actual_cost), sum)) %>% 
+            mutate("items_per_1000" = (items/(registered_patients/1000)),
+                   "quantity_per_1000" = (quantity/(registered_patients/1000)),
+                   "actual_cost_per_1000" = (actual_cost/(registered_patients/1000))) %>% 
+            select(date, input_variable)
+        
+        start_val <- temp_df[temp_df$date == date_range[1],input_variable]
+        end_val <- temp_df[temp_df$date == date_range[2],input_variable]
+        
+        # Consider division by 0 or missing
+        diff_percentage <- (end_val/start_val-1)*100
+        
+        change_direction <- case_when(
+                                diff_percentage > 0 ~ "an increase",
+                                diff_percentage < 0 ~ "a decrease",
+                                diff_percentage == 0 ~ "didn't change",
+                                TRUE ~ "Error, possible 0 or missing value")
+
+        temp <- paste0("The ", rv$yaxis, " of ", input_med, " prescribed in England", " from ", scales::comma(as.numeric(start_val)), 
+                       " on ", date1, " to ", scales::comma(as.numeric(end_val)), " on ", date2)
+        
+        if (diff_percentage != 0){
+            temp2 <- paste0(temp, ", ", change_direction, " of ", round(diff_percentage,2), "%.")
+        } else {
+            temp2 <- past0(temp, ". No change was observed over the period.")
+        }
+        
+                          
+    } else { # Area selected
+
+    }
+
+    return(temp2)
+}
+
+format_number <- function(number){
+    temp <- format(number, big.mark = ",", nsmall = 1, scientific = FALSE)
+    return(temp)
+}
+paste0(" random text ",format_number(100000.2233))
+
+# e.g.The [variable] of [drug name] prescribed in [selected area] 
+# from [x items] on [date 1] to [x items] on [date2], a [x]% [increase/decrease].
+# Total prescribing across this period was [x]% [above/below] the national average. 
 
 
 # # df_for_line e.g.# 
-# temp_df <- df %>% filter(chemical == "Apixaban",
-#               area_type == "ccg") %>%
-#     mutate("items_per_1000" = (items/(registered_patients/1000)),
-#            "quantity_per_1000" = (quantity/(registered_patients/1000)),
-#            "actual_cost_per_1000" = (actual_cost/(registered_patients/1000)))
+temp_df <- df %>% filter(chemical == "Apixaban",
+              area_type == "ccg") %>%
+    mutate("items_per_1000" = (items/(registered_patients/1000)),
+           "quantity_per_1000" = (quantity/(registered_patients/1000)),
+           "actual_cost_per_1000" = (actual_cost/(registered_patients/1000)))
 
+temp_df2 <- temp_df %>% filter(date >= "2021-01-01",
+                   date <= "2021-12-01") %>% 
+    group_by(date) %>% 
+    summarise(across(c(registered_patients, items, quantity, actual_cost), sum)) %>% 
+    mutate("items_per_1000" = (items/(registered_patients/1000)),
+           "quantity_per_1000" = (quantity/(registered_patients/1000)),
+           "actual_cost_per_1000" = (actual_cost/(registered_patients/1000))) %>% 
+    select(date, input_variable)
+
+input_variable <- "items"
+              

@@ -63,7 +63,24 @@ server <- function(input, output, session) {
 
     # Set up reactive values to store variables
     rv <- reactiveValues(click = NULL)
+    
+    # Asign the clicked shape ID to the reactive variable rv$click
+    observeEvent(input$mymap_shape_click, {
+        rv$click <- input$mymap_shape_click
+    })
+    
+    # Set up the button to return figures to national levels
+    output$clear_click <- renderUI({
+        if (!is.null(rv$click)) {
+            actionButton("reset", "Remove area")
+        }
+    })
 
+    # When the reset button is clicked return the rv$click value to NULL
+    observeEvent(input$reset, {
+        rv$click <- NULL
+    })
+    
     # Update Y axis title and store as reactive variable for use in plots
     observeEvent(input$variable, {
         rv$yaxis <- get_y_title(input$variable)
@@ -78,25 +95,8 @@ server <- function(input, output, session) {
     observeEvent(c(rv$yaxis, input$medicine, input$area, input$date_range), {
         rv$bar_title <- get_bar_title(rv$yaxis, input$medicine, input$area, input$date_range)
         })
-    
-    # Asign the clicked shape ID to the reactive variable rv$click
-    observeEvent(input$mymap_shape_click, {
-        rv$click <- input$mymap_shape_click
-        })
-    
-    # Set up the button to return figures to national levels
-    output$clear_click <- renderUI({
-        if (!is.null(rv$click)) {
-            actionButton("reset", "Remove area")
-        }
-    })
-    
-    # When the reset button is clicked return the rv$click value to NULL
-    observeEvent(input$reset, {
-        rv$click <- NULL
-    })
-    
-    
+
+
 # Create the leaflet map --------------------------------------------------
 
     output$mymap <- renderLeaflet({
@@ -230,7 +230,7 @@ server <- function(input, output, session) {
        if (!is.null(rv$click)) {
            
            temp_df <- df_for_line() %>% 
-                            filter(ods_code == rv$click)
+                            filter(ods_code == rv$click[1])
            
            p %>% 
                add_trace(data = temp_df,
@@ -239,7 +239,7 @@ server <- function(input, output, session) {
                          mode = "lines+markers",
                          line = list(color = "#D5824D"),
                          connectgaps = TRUE,
-                         name = "test title",
+                         name = ~name,
                          marker = list(color = "#D5824D",
                                        size = 4))
                
@@ -297,107 +297,15 @@ server <- function(input, output, session) {
  
     })
     
-    output$infotext <- renderText({"The <b>[variable]</b> of <b>[drug]</b> 
-        prescribed in <b>[area] [increased/decreased]</b> <b>[x]%</b> between 
-        <b>[date 1]</b> and <b>[date2]</b>. Average monthly prescribing across 
-        this period was <b>[x]% [above/below]</b> the national average."})
+    output$infotext <- renderText({
+        create_text_output(df_for_line(), input$medicine, input$date_range, input$variable, rv)
+        })
+    
+    # output$infotext <- renderText({"The <b>[variable]</b> of <b>[drug]</b> 
+    #     prescribed in <b>[area] [increased/decreased]</b> <b>[x]%</b> between 
+    #     <b>[date 1]</b> and <b>[date2]</b>. Average monthly prescribing across 
+    #     this period was <b>[x]% [above/below]</b> the national average."})
     
     # Note: if we want to use caching, RDT server must be set to False
 }
-
-
-
-
-# temp_df <- df %>% filter(chemical == "Apixaban",
-#                area_type == "ccg") %>%
-#     group_by(date, chemical, bnf_code, name, ods_code, gss_code) %>%
-#     summarise("registered_patients" = sum(registered_patients),
-#               "items" = sum(items),
-#               "quantity" = sum(quantity),
-#               "actual_cost" = sum(actual_cost)) %>%
-#     ungroup() %>%
-#     mutate("items_per_1000" = (items/(registered_patients/1000)),
-#            "quantity_per_1000" = (quantity/(registered_patients/1000)),
-#            "actual_cost_per_1000" = (actual_cost/(registered_patients/1000)))
-# 
-# 
-# bar_temp <- temp %>%
-#     filter(date >= "2020-01-01",
-#            date <= "2021-01-01") %>%
-#     group_by(chemical, bnf_code, name, ods_code, gss_code) %>%
-#     summarise("registered_patients" = sum(registered_patients),
-#               "items" = sum(items),
-#               "quantity" = sum(quantity),
-#               "actual_cost" = sum(actual_cost)) %>%
-#     ungroup() %>%
-#     mutate("items_per_1000" = (items/(registered_patients/1000)),
-#            "quantity_per_1000" = (quantity/(registered_patients/1000)),
-#            "actual_cost_per_1000" = (actual_cost/(registered_patients/1000))) %>%
-#     select(-registered_patients)
-# 
-# 
-# bar_temp %>%
-#     #mutate(median_centred = items - median(items)) %>%
-#     plot_ly(x = ~reorder(ods_code, items),
-#             y = ~items,
-#             type = "bar",
-#             hoverinfo = "text",
-#             hovertext = paste0("Name: ", bar_chart_df$name,
-#                                "<br>ODS code: ", bar_chart_df$ods_code,
-#                                "<br>GSS code: ", bar_chart_df$gss_code,
-#                                "<br>Items: ", bar_chart_df$items)) %>%
-#     layout(yaxis = list(title = "<b>Example Y-axis Title</b>",
-#                         tickformat = ",",
-#                         rangemode = "tozero"),
-#            xaxis = list(title = FALSE,
-#                         showticklabels = FALSE),
-#            hovermode = "x unified",
-#            shapes=list(type='line',
-#                        xref = "paper",
-#                        x0= 0,
-#                        x1= 1,
-#                        yref = "y",
-#                        y0 = ~median(items, na.rm = TRUE),
-#                        y1 = ~median(items, na.rm = TRUE),
-#                        line=list(dash='dot',
-#                                  width=2),
-#                        name = "test"),
-#            legend = list(x = 0.01,
-#                          y = 0.99))
-# 
-# bar_temp %>%
-#     #mutate(median_centred = items - median(items)) %>%
-#     plot_ly(x = ~reorder(ods_code, items),
-#             y = ~items,
-#             type = "bar",
-#             hoverinfo = "text",
-#             hovertext = paste0("Name: ", bar_temp$name,
-#                                "<br>ODS code: ", bar_temp$ods_code,
-#                                "<br>GSS code: ", bar_temp$gss_code,
-#                                "<br>Items: ", bar_temp$items),
-#             showlegend = FALSE,
-#             color = I("#004650"),
-#             alpha = 0.6) %>%
-#     add_lines(y = ~median(items, na.rm = TRUE),
-#               name = "National Median",
-#               line = list(dash = 'dot',
-#                           width = 2,
-#                           color = "#393939"),
-#               hovertext = paste0("National Median: ", median(bar_temp$items, na.rm = TRUE))) %>%
-#     add_annotations(xref = "paper",
-#                     yref ="y",
-#                     x = 0.05,
-#                     y = median(bar_temp$items, na.rm = TRUE)*1.15,
-#                     text = "<b>National median</b>",
-#                     showarrow = FALSE) %>% 
-#     layout(yaxis = list(title = "<b>Example Y-axis Title</b>",
-#                         tickformat = ",",
-#                         rangemode = "tozero"),
-#            xaxis = list(title = FALSE,
-#                         showticklabels = FALSE),
-#            hovermode = "x unified")
-
-
-
-
 

@@ -78,14 +78,6 @@ ui <- bootstrapPage(
                                     
                                     textOutput("testtext"),
                                         
-                                    # dateRangeInput("date_range3",
-                                    #                "Select date range",
-                                    #                start = lubridate::as_date(min(df$date)),
-                                    #                end = lubridate::as_date(max(df$date)),
-                                    #                startview = "year",
-                                    #                format = "M yyyy"),
-                                    # 
-                                    # hr()
                        ),
                        
                        absolutePanel(id = "outputpanel", class = "panel panel-default", fixed = TRUE,
