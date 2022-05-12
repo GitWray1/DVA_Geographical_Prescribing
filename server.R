@@ -86,6 +86,15 @@ server <- function(input, output, session) {
         rv$yaxis <- get_y_title(input$variable)
         })
     
+    # Update Y axis title and store as reactive variable for use in plots
+    observeEvent(input$area, {
+        
+        rv$area <- case_when(input$area == "ccg" ~ "CCG",
+                             input$area == "stp" ~ "STP",
+                             input$area == "region" ~ "Region",
+                             TRUE ~ "Unknown area input")
+    })
+    
     # Update line chart title and store as reactive variable
     observeEvent(c(rv$yaxis, input$medicine), {
         rv$line_title <- get_line_title(rv$yaxis, input$medicine)
@@ -136,52 +145,6 @@ server <- function(input, output, session) {
     
 
 # Create the line chart ---------------------------------------------------
-
-    # output$line_chart <- renderPlotly({
-    # 
-    #     df_for_line() %>%
-    #         group_by(date, chemical, bnf_code) %>% 
-    #         summarise(mean_variable = mean(get(input$variable), na.rm = TRUE),
-    #                   sd_variable = sd(get(input$variable), na.rm = TRUE),
-    #                   n_variable = n()) %>% 
-    #         ungroup() %>% 
-    #         mutate(se_variable = sd_variable/sqrt(n_variable),
-    #                lower_ci = mean_variable - qt(1 - (0.05/2), n_variable - 1) * se_variable,
-    #                upper_ci = mean_variable + qt(1 - (0.05/2), n_variable - 1) * se_variable) %>%
-    #         plot_ly(x = ~date,
-    #                 y = ~round(mean_variable, 2),
-    #                 type = "scatter",
-    #                 mode = "lines+markers",
-    #                 line = list(color = "#004650"),
-    #                 name = 'National Average',
-    #                 marker = list(color = "#004650",
-    #                             size = 4)) %>%
-    #         add_ribbons(ymin = ~round(lower_ci, 2),
-    #                     ymax = ~round(upper_ci, 2),
-    #                     fillcolor = 'rgba(0,70,80,0.2)',
-    #                     line = list(color = 'transparent'),
-    #                     marker = list(color = "transparent"),
-    #                     name = '95% Confidence interval',
-    #                     hoverinfo = "none") %>% 
-    #         layout(yaxis = list(title = rv$yaxis,
-    #                             tickformat = ",",
-    #                             rangemode = "tozero"),
-    #                xaxis = list(title = FALSE,
-    #                             type = 'date',
-    #                             tickformat = "%b<br>%Y"),
-    #                hovermode = "x unified",
-    #                legend = list(xanchor = "center",
-    #                              x = 0.5,
-    #                              y = 1.05,
-    #                              orientation = "h",
-    #                              bgcolor = "rgba(255,255,255,0.2)"),
-    #                title = list(text = stringr::str_wrap(paste0("<b>", rv$line_title,"</b>"), width = 80),
-    #                             font = list(size = 12),
-    #                             x = 0.05)) %>% 
-    #         config(displaylogo = FALSE,
-    #                modeBarButtonsToRemove = c("zoom", "pan", "select", "lasso"))
-    #     
-    # })
     
     output$line_chart <- renderPlotly({
         
@@ -286,7 +249,9 @@ server <- function(input, output, session) {
             layout(yaxis = list(title = rv$yaxis,
                                 tickformat = ",",
                                 rangemode = "tozero"),
-                   xaxis = list(title = FALSE,
+                   xaxis = list(title = list(text = paste0("<b>", rv$area,"s</b>"),
+                                             font = list(size=12),
+                                             standoff = 10),
                                 showticklabels = FALSE),
                    hovermode = "x unified",
                    title = list(text = stringr::str_wrap(paste0("<b>", rv$bar_title,"</b>"), width = 80),
@@ -301,9 +266,9 @@ server <- function(input, output, session) {
         create_text_output(df_for_line(), input$medicine, input$date_range, input$variable, rv)
         })
     
-    # output$infotext <- renderText({"The <b>[variable]</b> of <b>[drug]</b> 
-    #     prescribed in <b>[area] [increased/decreased]</b> <b>[x]%</b> between 
-    #     <b>[date 1]</b> and <b>[date2]</b>. Average monthly prescribing across 
+    # output$infotext <- renderText({"The <b>[variable]</b> of <b>[drug]</b>
+    #     prescribed in <b>[area] [increased/decreased]</b> <b>[x]%</b> between
+    #     <b>[date 1]</b> and <b>[date2]</b>. Average monthly prescribing across
     #     this period was <b>[x]% [above/below]</b> the national average."})
     
     # Note: if we want to use caching, RDT server must be set to False

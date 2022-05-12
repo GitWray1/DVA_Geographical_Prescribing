@@ -104,18 +104,41 @@ create_text_output <- function(df, input_med, date_range, input_variable, rv){
                                 diff_percentage == 0 ~ "didn't change",
                                 TRUE ~ "Error, possible 0 or missing value")
 
-        temp <- paste0("The ", rv$yaxis, " of ", input_med, " prescribed in England", " from ", scales::comma(as.numeric(start_val)), 
+        temp <- paste0("The ", rv$yaxis, " of ", input_med, " prescribed in England", " changed from ", scales::comma(as.numeric(start_val)), 
                        " on ", date1, " to ", scales::comma(as.numeric(end_val)), " on ", date2)
         
         if (diff_percentage != 0){
             temp2 <- paste0(temp, ", ", change_direction, " of ", round(diff_percentage,2), "%.")
         } else {
-            temp2 <- past0(temp, ". No change was observed over the period.")
+            temp2 <- paste0(temp, ". No change was observed over the period.")
         }
         
                           
     } else { # Area selected
 
+        start_val <- df[(df$date == date_range[1] & df$ods_code == rv$click[1]), input_variable]
+        end_val <- df[(df$date == date_range[2] & df$ods_code == rv$click[1]), input_variable]
+        
+        # Consider division by 0 or missing
+        diff_percentage <- (end_val/start_val-1)*100
+        
+        change_direction <- case_when(
+            diff_percentage > 0 ~ "an increase",
+            diff_percentage < 0 ~ "a decrease",
+            diff_percentage == 0 ~ "didn't change",
+            TRUE ~ "Error, possible 0 or missing value")
+        
+        temp <- paste0("The ", rv$yaxis, " of ", input_med, " prescribed in ", 
+                       df[(df$date == date_range[1] & df$ods_code == rv$click[1]), "name"], " changed from ",
+                       scales::comma(as.numeric(start_val)), " on ", date1, " to ", scales::comma(as.numeric(end_val)), " on ", date2)
+        
+        if (diff_percentage != 0){
+            temp2 <- paste0(temp, ", ", change_direction, " of ", round(diff_percentage,2), "%.")
+        } else {
+            temp2 <- paste0(temp, ". No change was observed over the period.")
+        }
+        
+        temp2 <- paste0(temp2, " Total prescribing of ", input_med," across this period was [x]% [above/below] the national average.")
     }
 
     return(temp2)
@@ -125,7 +148,7 @@ format_number <- function(number){
     temp <- format(number, big.mark = ",", nsmall = 1, scientific = FALSE)
     return(temp)
 }
-paste0(" random text ",format_number(100000.2233))
+
 
 # e.g.The [variable] of [drug name] prescribed in [selected area] 
 # from [x items] on [date 1] to [x items] on [date2], a [x]% [increase/decrease].
@@ -133,20 +156,20 @@ paste0(" random text ",format_number(100000.2233))
 
 
 # # df_for_line e.g.# 
-temp_df <- df %>% filter(chemical == "Apixaban",
-              area_type == "ccg") %>%
-    mutate("items_per_1000" = (items/(registered_patients/1000)),
-           "quantity_per_1000" = (quantity/(registered_patients/1000)),
-           "actual_cost_per_1000" = (actual_cost/(registered_patients/1000)))
-
-temp_df2 <- temp_df %>% filter(date >= "2021-01-01",
-                   date <= "2021-12-01") %>% 
-    group_by(date) %>% 
-    summarise(across(c(registered_patients, items, quantity, actual_cost), sum)) %>% 
-    mutate("items_per_1000" = (items/(registered_patients/1000)),
-           "quantity_per_1000" = (quantity/(registered_patients/1000)),
-           "actual_cost_per_1000" = (actual_cost/(registered_patients/1000))) %>% 
-    select(date, input_variable)
-
-input_variable <- "items"
+# temp_df <- df %>% filter(chemical == "Apixaban",
+#               area_type == "ccg") %>%
+#     mutate("items_per_1000" = (items/(registered_patients/1000)),
+#            "quantity_per_1000" = (quantity/(registered_patients/1000)),
+#            "actual_cost_per_1000" = (actual_cost/(registered_patients/1000)))
+# 
+# temp_df2 <- temp_df %>% filter(date >= "2021-01-01",
+#                    date <= "2021-12-01") %>% 
+#     group_by(date) %>% 
+#     summarise(across(c(registered_patients, items, quantity, actual_cost), sum)) %>% 
+#     mutate("items_per_1000" = (items/(registered_patients/1000)),
+#            "quantity_per_1000" = (quantity/(registered_patients/1000)),
+#            "actual_cost_per_1000" = (actual_cost/(registered_patients/1000))) %>% 
+#     select(date, input_variable)
+# 
+# input_variable <- "items"
               
