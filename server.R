@@ -100,9 +100,9 @@ server <- function(input, output, session) {
         rv$line_title <- get_line_title(rv$yaxis, input$medicine)
         })
     
-    # Update line chart title and store as reactive variable
+    # Update bar chart title and store as reactive variable
     observeEvent(c(rv$yaxis, input$medicine, input$area, input$date_range), {
-        rv$bar_title <- get_bar_title(rv$yaxis, input$medicine, input$area, input$date_range)
+        rv$bar_title <- get_bar_title(rv$yaxis, input$medicine, rv$area, input$date_range)
         })
 
 
@@ -170,7 +170,7 @@ server <- function(input, output, session) {
                         fillcolor = 'rgba(0,70,80,0.2)',
                         line = list(color = 'transparent'),
                         marker = list(color = "transparent"),
-                        name = '95% Confidence interval',
+                        name = '95% CI',
                         hoverinfo = "none") %>% 
             layout(yaxis = list(title = rv$yaxis,
                                 tickformat = ",",

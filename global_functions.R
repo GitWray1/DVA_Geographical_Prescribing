@@ -39,6 +39,11 @@ format_date <- function(input_date){
     return(temp)
 }
 
+# format_number <- function(number){
+#     temp <- format(number, big.mark = ",", nsmall = 1, scientific = FALSE)
+#     return(temp)
+# }
+
 # Get titles for line and bar chart y axes
 get_y_title <- function(input_var){
     
@@ -138,16 +143,49 @@ create_text_output <- function(df, input_med, date_range, input_variable, rv){
             temp2 <- paste0(temp, ". No change was observed over the period.")
         }
         
-        temp2 <- paste0(temp2, " Total prescribing of ", input_med," across this period was [x]% [above/below] the national average.")
+        
+        # Calculate national average
+        nat_average <- df %>% 
+            filter(date >= date_range[1],
+                   date <= date_range[2]) %>% 
+            group_by(name) %>% 
+            summarise(across(c(registered_patients, items, quantity, actual_cost), sum, na.rm = TRUE)) %>% 
+            mutate("items_per_1000" = (items/(registered_patients/1000)),
+                   "quantity_per_1000" = (quantity/(registered_patients/1000)),
+                   "actual_cost_per_1000" = (actual_cost/(registered_patients/1000))) %>% 
+            select(input_variable) %>% 
+            summarise(across(everything(), mean)) %>% 
+            as.numeric()
+        
+        # Calculate average for area
+        area_sum <- df %>% 
+            filter(date >= date_range[1],
+                   date <= date_range[2],
+                   ods_code == rv$click[1]) %>% 
+            group_by(name) %>% 
+            summarise(across(c(registered_patients, items, quantity, actual_cost), sum, na.rm = TRUE)) %>% 
+            mutate("items_per_1000" = (items/(registered_patients/1000)),
+                   "quantity_per_1000" = (quantity/(registered_patients/1000)),
+                   "actual_cost_per_1000" = (actual_cost/(registered_patients/1000))) %>% 
+            select(input_variable) %>% as.numeric()
+        
+        # calculate % difference
+        diff_percentage <- (area_sum/nat_average-1)*100
+        
+        # Calculate increase/decrease
+        change_direction <- case_when(
+            diff_percentage > 0 ~ paste0("was ", scales::comma(as.numeric(diff_percentage), accuracy = 0.1),"% " ,"above the national average."),
+            diff_percentage < 0 ~ paste0("was ", scales::comma(as.numeric(abs(diff_percentage)), accuracy = 0.1),"% " ,"below the national average."),
+            diff_percentage == 0 ~ " did not differ from the national average.",
+            TRUE ~ "Error, possible 0 or missing value")
+        
+        
+        temp2 <- paste0(temp2, " Total prescribing of ", input_med," across this period ", change_direction)
     }
 
     return(temp2)
 }
 
-format_number <- function(number){
-    temp <- format(number, big.mark = ",", nsmall = 1, scientific = FALSE)
-    return(temp)
-}
 
 
 # e.g.The [variable] of [drug name] prescribed in [selected area] 
@@ -155,21 +193,12 @@ format_number <- function(number){
 # Total prescribing across this period was [x]% [above/below] the national average. 
 
 
-# # df_for_line e.g.# 
+# # # df_for_line e.g.# 
 # temp_df <- df %>% filter(chemical == "Apixaban",
 #               area_type == "ccg") %>%
 #     mutate("items_per_1000" = (items/(registered_patients/1000)),
 #            "quantity_per_1000" = (quantity/(registered_patients/1000)),
 #            "actual_cost_per_1000" = (actual_cost/(registered_patients/1000)))
-# 
-# temp_df2 <- temp_df %>% filter(date >= "2021-01-01",
-#                    date <= "2021-12-01") %>% 
-#     group_by(date) %>% 
-#     summarise(across(c(registered_patients, items, quantity, actual_cost), sum)) %>% 
-#     mutate("items_per_1000" = (items/(registered_patients/1000)),
-#            "quantity_per_1000" = (quantity/(registered_patients/1000)),
-#            "actual_cost_per_1000" = (actual_cost/(registered_patients/1000))) %>% 
-#     select(date, input_variable)
-# 
-# input_variable <- "items"
+
+
               
