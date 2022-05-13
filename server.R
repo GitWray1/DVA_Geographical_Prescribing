@@ -131,7 +131,7 @@ server <- function(input, output, session) {
                                                      fillOpacity = 0.7,
                                                      bringToFront = TRUE),
                         label = ~lapply(paste0("<strong>Name: </strong>", df_for_map()$name,
-                                               "<br><strong>", input$variable,":</strong> ", round(df_for_map()[[input$variable]], 2)),
+                                               "<br><strong>", rv$yaxis,":</strong> ", tidy_number(df_for_map()[[input$variable]])),
                                         htmltools::HTML),
                         labelOptions = labelOptions(textsize = "12px",
                                                     style = list("font-family" = "Arial"))) %>%
@@ -172,6 +172,14 @@ server <- function(input, output, session) {
                         marker = list(color = "transparent"),
                         name = '95% CI',
                         hoverinfo = "none") %>% 
+            # add_lines(x = input$date_range[1],
+            #           name = "Date 1",
+            #           line = list(dash = 'dot',
+            #                       width = 2,
+            #                       color = "#393939"),
+            #           hovertext = "none",
+            #           hoverinfo = "none",
+            #           showlegend = FALSE) %>% 
             layout(yaxis = list(title = rv$yaxis,
                                 tickformat = ",",
                                 rangemode = "tozero"),
@@ -197,7 +205,7 @@ server <- function(input, output, session) {
            
            p %>% 
                add_trace(data = temp_df,
-                         y = ~items,
+                         y = ~temp_df[[input$variable]],
                          type = "scatter",
                          mode = "lines+markers",
                          line = list(color = "#D5824D"),
@@ -227,7 +235,7 @@ server <- function(input, output, session) {
                     hovertext = paste0("Name: ", df_for_bar()$name,
                                        "<br>ODS code: ", df_for_bar()$ods_code,
                                        "<br>GSS code: ", df_for_bar()$gss_code,
-                                       "<br>Items: ", round(df_for_bar()[[input$variable]], 2)),
+                                       "<br>", rv$yaxis, ": ", tidy_number(df_for_bar()[[input$variable]])),
                     showlegend = FALSE,
                     color = I("#004650"),
                     alpha = 0.6) %>%
@@ -236,7 +244,7 @@ server <- function(input, output, session) {
                       line = list(dash = 'dot',
                                   width = 2,
                                   color = "#393939"),
-                      hovertext = paste0("National Median: ", median(df_for_bar()[[input$variable]]))) %>%
+                      hovertext = paste0("National Median: ", tidy_number(median(df_for_bar()[[input$variable]])))) %>%
             add_annotations(xref = "paper",
                             yref ="y",
                             x = 0.05,
@@ -254,7 +262,7 @@ server <- function(input, output, session) {
                                              standoff = 10),
                                 showticklabels = FALSE),
                    hovermode = "x unified",
-                   title = list(text = stringr::str_wrap(paste0("<b>", rv$bar_title,"</b>"), width = 80),
+                   title = list(text = stringr::str_wrap(paste0("<b>", rv$bar_title,"</b>"), width = 78),
                                 font = list(size = 12),
                                 x = 0.05)) %>% 
             config(displaylogo = FALSE,

@@ -6,43 +6,28 @@ pal <- colorNumeric("plasma", domain = NULL)
 #qpal <- colorQuantile("plasma", domain = NULL, n = 5, na.color = "#808080")
 
 
-# Functions to make line chart --------------------------------------------
 
-#' Filter data frame for line chart and calculate values per 1000 registered people
-#'
-#' @param df The full data frame
-#' @param medicine_input The medicine to plot
-#' @param area_input The geographical area to plot, options = c("region","stp","ccg")
-#'
-#' @return The data frame filtered for selected medicine and geographical area, 
-#' with additional values calculated per 1000 registered people
-#' 
-#' @export
-#'
-#' @examples
-#' filter_for_line(df, "Apixaban", "ccg")
-#' filter_for_line(df, "Edoxaban", "region")
-filter_for_line <- function(df, medicine_input, area_input){
-    
-    temp <- df %>% 
-        
-        
-    return(temp)
-}
-
-
-# Functions to get reactive text ------------------------------------------
+# Generic functions -------------------------------------------------------
 
 # Function to format dates into 'Mon-YYYY' format
-format_date <- function(input_date){
+tidy_date <- function(input_date){
     temp <- format(lubridate::as_date(input_date), "%b %Y")
     return(temp)
 }
 
-# format_number <- function(number){
-#     temp <- format(number, big.mark = ",", nsmall = 1, scientific = FALSE)
-#     return(temp)
-# }
+# Clean up numbers (round, add commas etc)
+tidy_number <- function(number){
+    temp <- format(as.numeric(number), 
+                   big.mark = ",",
+                   digits = 2,
+                   nsmall = 2, 
+                   scientific = FALSE,
+                   drop0trailing = TRUE)
+    return(temp)
+}
+
+
+# Functions for chart labels and titles -----------------------------------
 
 # Get titles for line and bar chart y axes
 get_y_title <- function(input_var){
@@ -69,38 +54,40 @@ get_line_title <- function(rv_var, input_med){
 # Get title for bar chart 
 get_bar_title <- function(rv_var, input_med, input_area, input_dates){
     
-    date1 <- format(lubridate::as_date(input_dates[1]), "%b %Y")
-    date2 <- format(lubridate::as_date(input_dates[2]), "%b %Y")
+    date1 <- tidy_date(input_dates[1])
+    date2 <- tidy_date(input_dates[2])
     
     temp <- paste0(rv_var, " of ", input_med, " prescribed between ", date1, 
                    " and ", date2, " by ", input_area)
     return(temp)
 }
-# use format date function for above
 
-# Creating the reactive text output
+
+# Functions to get reactive text ------------------------------------------
 
 create_text_output <- function(df, input_med, date_range, input_variable, rv){
 
-    date1 <- format_date(date_range[1])
-    date2 <- format_date(date_range[2])
-
+    date1 <- tidy_date(date_range[1])
+    date2 <- tidy_date(date_range[2])
 
     if (is.null(rv$click)){ # No area selected
 
-        temp_df <- df %>% filter(date >= date_range[1],
-                                 date <= date_range[2]) %>% 
-            group_by(date) %>% 
-            summarise(across(c(registered_patients, items, quantity, actual_cost), sum)) %>% 
-            mutate("items_per_1000" = (items/(registered_patients/1000)),
-                   "quantity_per_1000" = (quantity/(registered_patients/1000)),
-                   "actual_cost_per_1000" = (actual_cost/(registered_patients/1000))) %>% 
-            select(date, input_variable)
+        # Wrangle df to get national data across the selected period
+        temp_df <- df %>% 
+                    filter(date >= date_range[1],
+                           date <= date_range[2]) %>% 
+                    group_by(date) %>% 
+                    summarise(across(c(registered_patients, items, quantity, actual_cost), sum)) %>% 
+                    ungroup() %>% 
+                    mutate("items_per_1000" = (items/(registered_patients/1000)),
+                           "quantity_per_1000" = (quantity/(registered_patients/1000)),
+                           "actual_cost_per_1000" = (actual_cost/(registered_patients/1000))) %>% 
+                    select(date, input_variable)
         
+        # Extract each variable needed for the dynamic text 
         start_val <- temp_df[temp_df$date == date_range[1],input_variable]
         end_val <- temp_df[temp_df$date == date_range[2],input_variable]
         
-        # Consider division by 0 or missing
         diff_percentage <- (end_val/start_val-1)*100
         
         change_direction <- case_when(
@@ -109,81 +96,88 @@ create_text_output <- function(df, input_med, date_range, input_variable, rv){
                                 diff_percentage == 0 ~ "didn't change",
                                 TRUE ~ "Error, possible 0 or missing value")
 
-        temp <- paste0("The ", rv$yaxis, " of ", input_med, " prescribed in England", " changed from ", scales::comma(as.numeric(start_val)), 
-                       " on ", date1, " to ", scales::comma(as.numeric(end_val)), " on ", date2)
+        # Build the text
+        output_text <- paste0("The ", stringr::str_to_lower(rv$yaxis), " of ", input_med, " prescribed in England", " changed from ", tidy_number(start_val), 
+                       " on ", date1, " to ", tidy_number(end_val), " on ", date2)
         
         if (diff_percentage != 0){
-            temp2 <- paste0(temp, ", ", change_direction, " of ", round(diff_percentage,2), "%.")
+            output_text <- paste0(output_text, ", ", change_direction, " of ", round(diff_percentage,2), "%.")
+            
         } else {
-            temp2 <- paste0(temp, ". No change was observed over the period.")
+            output_text <- paste0(output_text, ". No change was observed over the period.")
         }
         
                           
     } else { # Area selected
 
+        # Extract each variable needed for the dynamic text (data at local level so no need to summarise)
+        area_name <- df[(df$date == date_range[1] & df$ods_code == rv$click[1]), "name"]
         start_val <- df[(df$date == date_range[1] & df$ods_code == rv$click[1]), input_variable]
         end_val <- df[(df$date == date_range[2] & df$ods_code == rv$click[1]), input_variable]
         
-        # Consider division by 0 or missing
         diff_percentage <- (end_val/start_val-1)*100
         
         change_direction <- case_when(
-            diff_percentage > 0 ~ "an increase",
-            diff_percentage < 0 ~ "a decrease",
-            diff_percentage == 0 ~ "didn't change",
-            TRUE ~ "Error, possible 0 or missing value")
+                                diff_percentage > 0 ~ "an increase",
+                                diff_percentage < 0 ~ "a decrease",
+                                diff_percentage == 0 ~ "didn't change",
+                                TRUE ~ "Error, possible 0 or missing value")
         
-        temp <- paste0("The ", rv$yaxis, " of ", input_med, " prescribed in ", 
-                       df[(df$date == date_range[1] & df$ods_code == rv$click[1]), "name"], " changed from ",
-                       scales::comma(as.numeric(start_val)), " on ", date1, " to ", scales::comma(as.numeric(end_val)), " on ", date2)
+        # Build the dynamic text
+        output_text <- paste0("The ", stringr::str_to_lower(rv$yaxis), " of ", input_med, " prescribed in ", 
+                       area_name, " changed from ", tidy_number(start_val), " on ", 
+                       date1, " to ", tidy_number(end_val), " on ", date2)
         
         if (diff_percentage != 0){
-            temp2 <- paste0(temp, ", ", change_direction, " of ", round(diff_percentage,2), "%.")
+            output_text <- paste0(output_text, ", ", change_direction, " of ", tidy_number(diff_percentage), "%.")
+            
         } else {
-            temp2 <- paste0(temp, ". No change was observed over the period.")
+            output_text <- paste0(output_text, ". No change was observed over the period.")
         }
         
-        
+        # For the final sentence we want to calculate the difference from the national average across the period
         # Calculate national average
         nat_average <- df %>% 
-            filter(date >= date_range[1],
-                   date <= date_range[2]) %>% 
-            group_by(name) %>% 
-            summarise(across(c(registered_patients, items, quantity, actual_cost), sum, na.rm = TRUE)) %>% 
-            mutate("items_per_1000" = (items/(registered_patients/1000)),
-                   "quantity_per_1000" = (quantity/(registered_patients/1000)),
-                   "actual_cost_per_1000" = (actual_cost/(registered_patients/1000))) %>% 
-            select(input_variable) %>% 
-            summarise(across(everything(), mean)) %>% 
-            as.numeric()
+                filter(date >= date_range[1],
+                       date <= date_range[2]) %>% 
+                group_by(name) %>% 
+                summarise(across(c(registered_patients, items, quantity, actual_cost), sum, na.rm = TRUE)) %>%
+                ungroup() %>% 
+                mutate("items_per_1000" = (items/(registered_patients/1000)),
+                       "quantity_per_1000" = (quantity/(registered_patients/1000)),
+                       "actual_cost_per_1000" = (actual_cost/(registered_patients/1000))) %>% 
+                select(input_variable) %>% 
+                summarise(across(everything(), mean)) %>% 
+                as.numeric()
         
         # Calculate average for area
         area_sum <- df %>% 
-            filter(date >= date_range[1],
-                   date <= date_range[2],
-                   ods_code == rv$click[1]) %>% 
-            group_by(name) %>% 
-            summarise(across(c(registered_patients, items, quantity, actual_cost), sum, na.rm = TRUE)) %>% 
-            mutate("items_per_1000" = (items/(registered_patients/1000)),
-                   "quantity_per_1000" = (quantity/(registered_patients/1000)),
-                   "actual_cost_per_1000" = (actual_cost/(registered_patients/1000))) %>% 
-            select(input_variable) %>% as.numeric()
+                filter(date >= date_range[1],
+                       date <= date_range[2],
+                       ods_code == rv$click[1]) %>% 
+                group_by(name) %>% 
+                summarise(across(c(registered_patients, items, quantity, actual_cost), sum, na.rm = TRUE)) %>%
+                ungroup() %>% 
+                mutate("items_per_1000" = (items/(registered_patients/1000)),
+                       "quantity_per_1000" = (quantity/(registered_patients/1000)),
+                       "actual_cost_per_1000" = (actual_cost/(registered_patients/1000))) %>% 
+                select(input_variable) %>% as.numeric()
         
         # calculate % difference
         diff_percentage <- (area_sum/nat_average-1)*100
         
         # Calculate increase/decrease
         change_direction <- case_when(
-            diff_percentage > 0 ~ paste0("was ", scales::comma(as.numeric(diff_percentage), accuracy = 0.1),"% " ,"above the national average."),
-            diff_percentage < 0 ~ paste0("was ", scales::comma(as.numeric(abs(diff_percentage)), accuracy = 0.1),"% " ,"below the national average."),
-            diff_percentage == 0 ~ " did not differ from the national average.",
-            TRUE ~ "Error, possible 0 or missing value")
+                diff_percentage > 0 ~ paste0("was ", tidy_number(diff_percentage), "% " ,"above the national average."),
+                diff_percentage < 0 ~ paste0("was ", tidy_number(abs(diff_percentage)), "% " ,"below the national average."),
+                diff_percentage == 0 ~ " did not differ from the national average.",
+                TRUE ~ "Error, possible 0 or missing value.")
         
-        
-        temp2 <- paste0(temp2, " Total prescribing of ", input_med," across this period ", change_direction)
+        # Add the final sentence
+        output_text <- paste0(output_text, " Total prescribing of ", input_med," across this period ", change_direction)
     }
 
-    return(temp2)
+    return(output_text)
 }
 
 
@@ -201,4 +195,28 @@ create_text_output <- function(df, input_med, date_range, input_variable, rv){
 #            "actual_cost_per_1000" = (actual_cost/(registered_patients/1000)))
 
 
+
+# Functions to make line chart --------------------------------------------
+
+#' Filter data frame for line chart and calculate values per 1000 registered people
+#'
+#' @param df The full data frame
+#' @param medicine_input The medicine to plot
+#' @param area_input The geographical area to plot, options = c("region","stp","ccg")
+#'
+#' @return The data frame filtered for selected medicine and geographical area, 
+#' with additional values calculated per 1000 registered people
+#' 
+#' @export
+#'
+#' @examples
+#' filter_for_line(df, "Apixaban", "ccg")
+#' filter_for_line(df, "Edoxaban", "region")
+filter_for_line <- function(df, medicine_input, area_input){
+    
+    temp <- df %>% 
+        
+        
+        return(temp)
+}
               
