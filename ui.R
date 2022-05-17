@@ -28,9 +28,22 @@ ui <- bootstrapPage(
                        
                        leafletOutput("mymap", width = "100%", height = "100%"),
                        
+                       absolutePanel(id = "infopanel", class = "panel panel-default", fixed = TRUE,
+                                     draggable = TRUE, height = "auto", width = "500",
+                                     top = "130", bottom = "auto", left = "20", right = "auto",
+
+                                     #h4("Use the left panel to select parameters for plotting"),
+                                     
+                                     #hr(),
+
+                                     htmlOutput("infotext"),
+                                     
+                                     #hr()
+                                     ),
+                       
                        absolutePanel(id = "filterpanel", class = "panel panel-default", fixed = TRUE,
                                      draggable = TRUE, height = "auto", width = "270",
-                                     top = "150", bottom = "auto", left = "40", right = "auto",
+                                     top = "300", bottom = "auto", left = "20", right = "auto",
                                      
                                      selectInput("medicine", 
                                                  "Select medicine",
@@ -57,7 +70,7 @@ ui <- bootstrapPage(
                                                                    "STP" = "stp", 
                                                                    "CCG" = "ccg"),
                                                        selected = "ccg",
-                                                       status = "primary",
+                                                       status = "myClass",
                                                        size = "sm",
                                                        justified = TRUE),
                                      
@@ -71,12 +84,12 @@ ui <- bootstrapPage(
                                                          dateFormat = "M yyyy",
                                                          minDate = lubridate::as_date(min(df$date)),
                                                          maxDate = lubridate::as_date(max(df$date)),
-                                                         clearButton = TRUE,
-                                                         autoClose = TRUE),
+                                                         minView = "months",
+                                                         autoClose = TRUE,
+                                                         toggleSelected = FALSE,
+                                                         addon = "left"),
                                     
-                                    hr(),
-                                    
-                                    textOutput("testtext"),
+                                    hr()
                                         
                        ),
                        
@@ -84,11 +97,11 @@ ui <- bootstrapPage(
                                       draggable = TRUE, height = "auto", width = "600",
                                       top = 70, bottom = "auto", left = "auto", right = "10",
                                      
-                                     h4("Use the left panel to select parameters for plotting"),
+                                     #h4("Use the left panel to select parameters for plotting"),
                                      
-                                     h5("Click on an area for further details "),
+                                     h4("Click on an area for further details "),
                                      
-                                     htmlOutput("infotext"),
+                                     #htmlOutput("infotext"),
                                      
                                      br(),
                                      
@@ -103,9 +116,10 @@ ui <- bootstrapPage(
                        )),
           
           tabPanel("Data",
-                   DT::dataTableOutput("data_table"),
-                   downloadButton("full_csv_download",
-                                  "Download as CSV")),
+                   DT::dataTableOutput("data_table")#,
+                   #downloadButton("full_csv_download",
+                                  #"Download as CSV")
+                   ),
           
           tabPanel("About this dashboard",
                    includeMarkdown("about.rmd"))

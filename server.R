@@ -8,8 +8,6 @@ library(dplyr)
 
 server <- function(input, output, session) {
     
-    output$testtext <- renderText(as.character(rv$click))
-    
 # Filter the data according to user input ---------------------------------
     
     df_for_line <- reactive({
@@ -81,6 +79,12 @@ server <- function(input, output, session) {
         rv$click <- NULL
     })
     
+    # When the area is changed return the rv$click value to NULL
+    observeEvent(input$area, {
+        rv$click <- NULL
+    })
+    
+    
     # Update Y axis title and store as reactive variable for use in plots
     observeEvent(input$variable, {
         rv$yaxis <- get_y_title(input$variable)
@@ -118,6 +122,10 @@ server <- function(input, output, session) {
     })
     
     observeEvent(c(df_for_map(), input$variable), {
+        
+        #pal <- colorBin("plasma", domain = df_for_map()[[input$variable]], bins = 5, na.color = "#808080")
+        pal <- colorNumeric("plasma", domain = df_for_map()[[input$variable]])
+        
         leafletProxy("mymap", data = df_for_map()) %>%
             clearShapes() %>%
             addPolygons(fillColor = ~pal(df_for_map()[[input$variable]]),
@@ -148,6 +156,34 @@ server <- function(input, output, session) {
     
     output$line_chart <- renderPlotly({
         
+        date_vlines <- list(
+                        list(type = "line",
+                             fillcolor = "black",
+                             line = list(color = "black",
+                                         dash = "dot",
+                                         width = 1.5),
+                             opacity = 0.3,
+                             x0 = input$date_range[1],
+                             x1 = input$date_range[1],
+                             xref = "x",
+                             y0 = 0,
+                             y1 = 0.95,
+                             yref = "paper"),
+            
+                        list(type = "line",
+                             fillcolor = "black",
+                             line = list(color = "black",
+                                         dash = "dot",
+                                         width = 1.5),
+                             opacity = 0.3,
+                             x0 = input$date_range[2],
+                             x1 = input$date_range[2],
+                             xref = "x",
+                             y0 = 0,
+                             y1 = 0.95,
+                             yref = "paper"))
+        
+
        p <- df_for_line() %>%
             group_by(date, chemical, bnf_code) %>% 
             summarise(mean_variable = mean(get(input$variable), na.rm = TRUE),
@@ -162,6 +198,7 @@ server <- function(input, output, session) {
                     type = "scatter",
                     mode = "lines+markers",
                     line = list(color = "#004650"),
+                    hoverinfo = "name+x+y",
                     name = 'National Average',
                     marker = list(color = "#004650",
                                   size = 4)) %>%
@@ -171,16 +208,21 @@ server <- function(input, output, session) {
                         line = list(color = 'transparent'),
                         marker = list(color = "transparent"),
                         name = '95% CI',
-                        hoverinfo = "none") %>% 
-            # add_lines(x = input$date_range[1],
-            #           name = "Date 1",
-            #           line = list(dash = 'dot',
-            #                       width = 2,
-            #                       color = "#393939"),
-            #           hovertext = "none",
-            #           hoverinfo = "none",
-            #           showlegend = FALSE) %>% 
-            layout(yaxis = list(title = rv$yaxis,
+                        hoverinfo = "text",
+                        hovertext = "95% Confidence interval") %>% 
+            # add_trace(x = ~as.Date("2020-01-01"),
+            #           yref = "paper",
+            #           y0 = 0,
+            #           y1 = 1,
+            #           type = 'scatter', 
+            #           mode = 'lines',
+            #           line = list(color = 'black'),
+            #           name = '') %>% 
+            layout(title = list(text = stringr::str_wrap(paste0("<b>", rv$line_title,"</b>"), width = 80),
+                                font = list(size = 12),
+                                x = 0.05,
+                                yanchor = "bottom"),
+                   yaxis = list(title = rv$yaxis,
                                 tickformat = ",",
                                 rangemode = "tozero"),
                    xaxis = list(title = FALSE,
@@ -192,9 +234,7 @@ server <- function(input, output, session) {
                                  y = 1.05,
                                  orientation = "h",
                                  bgcolor = "rgba(255,255,255,0.2)"),
-                   title = list(text = stringr::str_wrap(paste0("<b>", rv$line_title,"</b>"), width = 80),
-                                font = list(size = 12),
-                                x = 0.05)) %>% 
+                   shapes = date_vlines) %>% 
             config(displaylogo = FALSE,
                    modeBarButtonsToRemove = c("zoom", "pan", "select", "lasso"))
         
@@ -205,12 +245,12 @@ server <- function(input, output, session) {
            
            p %>% 
                add_trace(data = temp_df,
-                         y = ~temp_df[[input$variable]],
+                         y = ~tidy_number(temp_df[[input$variable]]),
                          type = "scatter",
                          mode = "lines+markers",
                          line = list(color = "#D5824D"),
                          connectgaps = TRUE,
-                         name = ~name,
+                         name = ~stringr::str_trunc(name, width = 30, side = "right"),
                          marker = list(color = "#D5824D",
                                        size = 4))
                
@@ -227,6 +267,8 @@ server <- function(input, output, session) {
     # Use plotly proxy?
     output$bar_chart <- renderPlotly({
         
+        ind <- which(df_for_bar()$ods_code == rv$click[1]) - 1
+        
         df_for_bar() %>%
             plot_ly(x = ~reorder(ods_code, get(input$variable)),
                     y = ~get(input$variable),
@@ -237,8 +279,12 @@ server <- function(input, output, session) {
                                        "<br>GSS code: ", df_for_bar()$gss_code,
                                        "<br>", rv$yaxis, ": ", tidy_number(df_for_bar()[[input$variable]])),
                     showlegend = FALSE,
+                    selectedpoints = c(106, ind),
                     color = I("#004650"),
-                    alpha = 0.6) %>%
+                    alpha = 0.6,
+                    selected = list(marker = list(color ="#D5824D")),
+                    unselected = list(marker = list(color ="#004650",
+                                                    opacity = 0.6))) %>%
             add_lines(y = ~median(get(input$variable), na.rm = TRUE),
                       name = "National Median",
                       line = list(dash = 'dot',
@@ -264,7 +310,8 @@ server <- function(input, output, session) {
                    hovermode = "x unified",
                    title = list(text = stringr::str_wrap(paste0("<b>", rv$bar_title,"</b>"), width = 78),
                                 font = list(size = 12),
-                                x = 0.05)) %>% 
+                                x = 0.05,
+                                yanchor = "bottom")) %>% 
             config(displaylogo = FALSE,
                    modeBarButtonsToRemove = c("zoom", "pan", "select", "lasso"))
  
@@ -274,10 +321,6 @@ server <- function(input, output, session) {
         create_text_output(df_for_line(), input$medicine, input$date_range, input$variable, rv)
         })
     
-    # output$infotext <- renderText({"The <b>[variable]</b> of <b>[drug]</b>
-    #     prescribed in <b>[area] [increased/decreased]</b> <b>[x]%</b> between
-    #     <b>[date 1]</b> and <b>[date2]</b>. Average monthly prescribing across
-    #     this period was <b>[x]% [above/below]</b> the national average."})
     
     # Note: if we want to use caching, RDT server must be set to False
 }

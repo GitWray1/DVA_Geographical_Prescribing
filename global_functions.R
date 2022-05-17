@@ -2,8 +2,9 @@
 # Set up extra bits -------------------------------------------------------
 
 # Set colour pallete to use
-pal <- colorNumeric("plasma", domain = NULL)
-#qpal <- colorQuantile("plasma", domain = NULL, n = 5, na.color = "#808080")
+#pal <- colorNumeric("plasma", domain = NULL)
+#pal <- colorQuantile("plasma", domain = NULL, n = 10, na.color = "#808080")
+#pal <- colorBin("plasma", domain = input$variable, bins = 10, na.color = "#808080")
 
 
 
@@ -57,7 +58,7 @@ get_bar_title <- function(rv_var, input_med, input_area, input_dates){
     date1 <- tidy_date(input_dates[1])
     date2 <- tidy_date(input_dates[2])
     
-    temp <- paste0(rv_var, " of ", input_med, " prescribed between ", date1, 
+    temp <- paste0("Total ",stringr::str_to_lower(rv_var), " of ", input_med, " prescribed between ", date1, 
                    " and ", date2, " by ", input_area)
     return(temp)
 }
@@ -97,14 +98,14 @@ create_text_output <- function(df, input_med, date_range, input_variable, rv){
                                 TRUE ~ "Error, possible 0 or missing value")
 
         # Build the text
-        output_text <- paste0("The ", stringr::str_to_lower(rv$yaxis), " of ", input_med, " prescribed in England", " changed from ", tidy_number(start_val), 
-                       " on ", date1, " to ", tidy_number(end_val), " on ", date2)
+        output_text <- paste0("The <b>", stringr::str_to_lower(rv$yaxis), "</b> of <b>", input_med, "</b> prescribed in England", " changed from <b>", tidy_number(start_val), 
+                       "</b> in <b>", date1, "</b> to <b>", tidy_number(end_val), "</b> in <b>", date2, "</b>")
         
         if (diff_percentage != 0){
-            output_text <- paste0(output_text, ", ", change_direction, " of ", round(diff_percentage,2), "%.")
+            output_text <- paste0(output_text, ", ", change_direction, " of <b>", round(diff_percentage,2), "%</b>.")
             
         } else {
-            output_text <- paste0(output_text, ". No change was observed over the period.")
+            output_text <- paste0(output_text, ".<b> No change</b> was observed over the period.")
         }
         
                           
@@ -124,12 +125,12 @@ create_text_output <- function(df, input_med, date_range, input_variable, rv){
                                 TRUE ~ "Error, possible 0 or missing value")
         
         # Build the dynamic text
-        output_text <- paste0("The ", stringr::str_to_lower(rv$yaxis), " of ", input_med, " prescribed in ", 
-                       area_name, " changed from ", tidy_number(start_val), " on ", 
-                       date1, " to ", tidy_number(end_val), " on ", date2)
+        output_text <- paste0("The <b>", stringr::str_to_lower(rv$yaxis), "</b> of <b>", input_med, "</b> prescribed in <b>", 
+                       area_name, "</b> changed from <b>", tidy_number(start_val), "</b> on <b>", 
+                       date1, "</b> to <b>", tidy_number(end_val), "</b> on <b>", date2,"</b>")
         
         if (diff_percentage != 0){
-            output_text <- paste0(output_text, ", ", change_direction, " of ", tidy_number(diff_percentage), "%.")
+            output_text <- paste0(output_text, ", ", change_direction, " of <b>", tidy_number(diff_percentage), "%</b>.")
             
         } else {
             output_text <- paste0(output_text, ". No change was observed over the period.")
@@ -168,32 +169,39 @@ create_text_output <- function(df, input_med, date_range, input_variable, rv){
         
         # Calculate increase/decrease
         change_direction <- case_when(
-                diff_percentage > 0 ~ paste0("was ", tidy_number(diff_percentage), "% " ,"above the national average."),
-                diff_percentage < 0 ~ paste0("was ", tidy_number(abs(diff_percentage)), "% " ,"below the national average."),
-                diff_percentage == 0 ~ " did not differ from the national average.",
+                diff_percentage > 0 ~ paste0("was <b>", tidy_number(diff_percentage), "%</b> " ,"above the national average."),
+                diff_percentage < 0 ~ paste0("was <b>", tidy_number(abs(diff_percentage)), "%</b> " ,"below the national average."),
+                diff_percentage == 0 ~ " <b>did not differ</b> from the national average.",
                 TRUE ~ "Error, possible 0 or missing value.")
         
         # Add the final sentence
-        output_text <- paste0(output_text, " Total prescribing of ", input_med," across this period ", change_direction)
+        output_text <- paste0(output_text, " Total prescribing of <b>", input_med,"</b> across this period ", change_direction)
     }
 
     return(output_text)
 }
 
 
-
-# e.g.The [variable] of [drug name] prescribed in [selected area] 
-# from [x items] on [date 1] to [x items] on [date2], a [x]% [increase/decrease].
-# Total prescribing across this period was [x]% [above/below] the national average. 
-
-
 # # # df_for_line e.g.# 
-# temp_df <- df %>% filter(chemical == "Apixaban",
+# temp_line_df <- df %>% filter(chemical == "Apixaban",
 #               area_type == "ccg") %>%
 #     mutate("items_per_1000" = (items/(registered_patients/1000)),
 #            "quantity_per_1000" = (quantity/(registered_patients/1000)),
 #            "actual_cost_per_1000" = (actual_cost/(registered_patients/1000)))
-
+# 
+# temp_bar_df <- temp_line_df %>%
+#     filter(date >= "2021-01-01",
+#            date <= "2021-12-01") %>%
+#     group_by(chemical, bnf_code, name, ods_code, gss_code) %>%
+#     summarise("registered_patients" = sum(registered_patients),
+#               "items" = sum(items),
+#               "quantity" = sum(quantity),
+#               "actual_cost" = sum(actual_cost)) %>%
+#     ungroup() %>%
+#     mutate("items_per_1000" = (items/(registered_patients/1000)),
+#            "quantity_per_1000" = (quantity/(registered_patients/1000)),
+#            "actual_cost_per_1000" = (actual_cost/(registered_patients/1000))) %>%
+#     select(-registered_patients)
 
 
 # Functions to make line chart --------------------------------------------
@@ -219,4 +227,5 @@ filter_for_line <- function(df, medicine_input, area_input){
         
         return(temp)
 }
+
               

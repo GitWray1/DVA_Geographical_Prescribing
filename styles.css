@@ -15,6 +15,13 @@ div.outer {
     cursor: move;
 }
 
+#infopanel {
+    background-color: #FFFFFF;
+    border-color: #0e0e0e;
+    padding: 10px 10px 10px 20px;
+    cursor: move;
+}
+
 #outputpanel {
     background-color: #FFFFFF;
     border-color: #0e0e0e;
@@ -23,11 +30,32 @@ div.outer {
 }
 
 #infotext {
-    font-size: 10pt;
+    font-size: 11pt;
 }
 
 hr {
     border-color: gray;
     background-color: 0.5em;
     margin-bottom: 0.5em;
+}
+
+.navbar-default .navbar-brand:hover {
+  color: white
+}
+
+.navbar-default:hover .navbar-nav>li>a:hover {
+  color: #D5824D
+}
+
+.btn-myClass.btn {
+    color: #2c3e50;
+    background-color: #fff;
+    border-color: #2c3e50;
+    border: 1px solid;
+}
+
+.btn-myClass.active {
+    color: #fff;
+    background-color: #2c3e50;
+    border-color: #2c3e50;
 }
