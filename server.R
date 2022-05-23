@@ -123,8 +123,17 @@ server <- function(input, output, session) {
     
     observeEvent(c(df_for_map(), input$variable), {
         
-        #pal <- colorBin("plasma", domain = df_for_map()[[input$variable]], bins = 5, na.color = "#808080")
-        pal <- colorNumeric("plasma", domain = df_for_map()[[input$variable]])
+        #qpal <- colorQuantile("plasma", domain = df_for_map()[[input$variable]], n = 5, na.color = "#808080")
+        
+        # qpal_colors <- unique(qpal(sort(df_for_map()[[input$variable]]))) # hex codes
+        # qpal_labs <- quantile(df_for_map()[[input$variable]], seq(0, 1, .2)) # depends on n from pal
+        # qpal_labs <- paste(round(lag(qpal_labs)), round(qpal_labs), sep = " - ")[-1] # first lag is NA
+        
+        pal <- colorBin("plasma", 
+                        domain = df_for_map()[[input$variable]],
+                        bins = 5,
+                        na.color = "#808080")
+        #pal <- colorNumeric("plasma", domain = df_for_map()[[input$variable]])
         
         leafletProxy("mymap", data = df_for_map()) %>%
             clearShapes() %>%
@@ -146,6 +155,8 @@ server <- function(input, output, session) {
             clearControls() %>%
             addLegend(position = "bottomleft",
                       pal = pal,
+                      #colors = qpal_colors,
+                      #labels = qpal_labs,
                       values = ~df_for_map()[[input$variable]],
                       title = rv$yaxis,
                       opacity = 0.7)
