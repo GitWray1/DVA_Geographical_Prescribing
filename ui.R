@@ -14,6 +14,7 @@ library(plotly)
 source("R/load_data.R")
 source("R/global_functions.R")
 
+# Make sure to explain how to calculate the means and sd in the about page
 
 # Create Shiny UI ---------------------------------------------------------
 
@@ -84,9 +85,9 @@ ui <- bootstrapPage(
                                                          toggleSelected = FALSE,
                                                          addon = "left"),
                                      
-                                     hr(),
+                                     hr()
                                      
-                                     downloadButton("mapdownload", "Download map")
+                                     #downloadButton("mapdownload", "Download map")
                                         
                        ),
                        

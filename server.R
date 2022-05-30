@@ -3,44 +3,26 @@
 
 library(shiny)
 library(dplyr)
-library(mapview)
+
 
 # Create server  ----------------------------------------------------------
 
 server <- function(input, output, session) {
+
     
 # Filter the data according to user input ---------------------------------
     
     df_for_line <- reactive({
-        
-        df %>% filter(chemical == input$medicine,
-                      area_type == input$area) %>%
-               mutate("items_per_1000" = (items/(registered_patients/1000)),
-                      "quantity_per_1000" = (quantity/(registered_patients/1000)),
-                      "actual_cost_per_1000" = (actual_cost/(registered_patients/1000)))
+        filter_for_line(df, input$medicine, input$area)
     })
-
+    
     df_for_bar <- reactive({
-
-        df_for_line() %>% 
-            filter(date >= input$date_range[1],
-                   date <= input$date_range[2]) %>% 
-            group_by(chemical, bnf_code, name, ods_code, gss_code) %>% 
-            summarise("registered_patients" = sum(registered_patients),
-                      "items" = sum(items), 
-                      "quantity" = sum(quantity), 
-                      "actual_cost" = sum(actual_cost)) %>% 
-            ungroup() %>% 
-            mutate("items_per_1000" = (items/(registered_patients/1000)),
-                   "quantity_per_1000" = (quantity/(registered_patients/1000)),
-                   "actual_cost_per_1000" = (actual_cost/(registered_patients/1000))) %>% 
-            select(-registered_patients)
-
-            })
-
+        filter_for_bar(df_for_line(), input$date_range)
+    })
+    
     df_for_map <- reactive({
         shp_files %>% inner_join(df_for_bar())
-        })
+    })
 
 
 # Render the data table ---------------------------------------------------
@@ -52,6 +34,7 @@ server <- function(input, output, session) {
                                                             columnDefs = list(list(width = '400px',
                                                                                    targets = 5))))
 
+    
 # Create reactive values for charts ---------------------------------------
 
     # Set up reactive values to store variables
@@ -107,49 +90,10 @@ server <- function(input, output, session) {
 
 # Create the leaflet map --------------------------------------------------
 
-    output$mymap <- renderLeaflet({
-        leaflet(options = leafletOptions(zoomDelta = 0.25,
-                                         zoomSnap = 0.25)) %>% 
-            setView(lat = 53,
-                    lng = 0,
-                    zoom = 6.75) %>%
-            addProviderTiles(provider = "CartoDB.Positron")
-    })
-    
+    output$mymap <- renderLeaflet(create_start_map())
     
     observeEvent(c(df_for_map(), input$variable), {
-        
-        pal <- colorBin("plasma",
-                        domain = df_for_map()[[input$variable]],
-                        bins = 5,
-                        na.color = "#808080")
-        
-        # Run code below to have a continuous scale
-        #pal <- colorNumeric("plasma", domain = df_for_map()[[input$variable]])
-
-        leafletProxy("mymap", data = df_for_map()) %>%
-            clearShapes() %>%
-            addPolygons(fillColor = ~pal(df_for_map()[[input$variable]]),
-                        fillOpacity = 0.3,
-                        color = "#393939",
-                        weight = 1.5,
-                        opacity = 1,
-                        layerId = ~ods_code,
-                        highlight = highlightOptions(weight = 3,
-                                                     color = "#222222",
-                                                     fillOpacity = 0.7,
-                                                     bringToFront = TRUE),
-                        label = ~lapply(paste0("<strong>Name: </strong>", df_for_map()$name,
-                                               "<br><strong>", rv$yaxis,":</strong> ", tidy_number(df_for_map()[[input$variable]])),
-                                        htmltools::HTML),
-                        labelOptions = labelOptions(textsize = "12px",
-                                                    style = list("font-family" = "Arial"))) %>%
-            clearControls() %>%
-            addLegend(position = "bottomleft",
-                      pal = pal,
-                      values = ~df_for_map()[[input$variable]],
-                      title = rv$yaxis,
-                      opacity = 0.7)
+        update_map(df_for_map(), input$variable, pal, rv)
     })
     
 
@@ -157,81 +101,8 @@ server <- function(input, output, session) {
     
     output$line_chart <- renderPlotly({
         
-        date_vlines <- list(
-                        list(type = "line",
-                             fillcolor = "black",
-                             line = list(color = "black",
-                                         dash = "dot",
-                                         width = 2.5),
-                             opacity = 0.3,
-                             x0 = input$date_range[1],
-                             x1 = input$date_range[1],
-                             xref = "x",
-                             y0 = 0,
-                             y1 = 0.95,
-                             yref = "paper"),
-            
-                        list(type = "line",
-                             fillcolor = "black",
-                             line = list(color = "black",
-                                         dash = "dot",
-                                         width = 2.5),
-                             opacity = 0.3,
-                             x0 = input$date_range[2],
-                             x1 = input$date_range[2],
-                             xref = "x",
-                             y0 = 0,
-                             y1 = 0.95,
-                             yref = "paper"))
+        p <- create_line_chart(df_for_line(), input$variable, input$date_range, rv)
 
-        # Make sure to explain how to calculate the means and sd in the about this
-        
-       p <- df_for_line() %>%
-            group_by(date, chemical, bnf_code) %>% 
-            summarise(mean_variable = weighted.mean(get(input$variable), registered_patients, na.rm = TRUE),
-                      sd_variable = sqrt(Hmisc::wtd.var(get(input$variable), registered_patients, na.rm = TRUE)),
-                      n_variable = n()) %>% 
-            ungroup() %>% 
-            mutate(se_variable = sd_variable/sqrt(n_variable),
-                   lower_ci = mean_variable - qt(1 - (0.05/2), n_variable - 1) * se_variable,
-                   upper_ci = mean_variable + qt(1 - (0.05/2), n_variable - 1) * se_variable) %>%
-            plot_ly(x = ~date,
-                    y = ~round(mean_variable, 2),
-                    type = "scatter",
-                    mode = "lines+markers",
-                    line = list(color = "#004650"),
-                    hoverinfo = "name+x+y",
-                    name = 'National Average',
-                    marker = list(color = "#004650",
-                                  size = 4)) %>%
-            add_ribbons(ymin = ~round(lower_ci, 2),
-                        ymax = ~round(upper_ci, 2),
-                        fillcolor = 'rgba(0,70,80,0.2)',
-                        line = list(color = 'transparent'),
-                        marker = list(color = "transparent"),
-                        name = '95% CI',
-                        hoverinfo = "text",
-                        hovertext = "95% Confidence interval") %>% 
-            layout(title = list(text = stringr::str_wrap(paste0("<b>", rv$line_title,"</b>"), width = 80),
-                                font = list(size = 12),
-                                x = 0.05,
-                                yanchor = "bottom"),
-                   yaxis = list(title = rv$yaxis,
-                                tickformat = ",",
-                                rangemode = "tozero"),
-                   xaxis = list(title = FALSE,
-                                type = 'date',
-                                tickformat = "%b<br>%Y"),
-                   hovermode = "x unified",
-                   legend = list(xanchor = "center",
-                                 x = 0.5,
-                                 y = 1.05,
-                                 orientation = "h",
-                                 bgcolor = "rgba(255,255,255,0.2)"),
-                   shapes = date_vlines) %>% 
-            config(displaylogo = FALSE,
-                   modeBarButtonsToRemove = c("zoom", "pan", "select", "lasso"))
-        
        if (!is.null(rv$click)) {
            
            temp_df <- df_for_line() %>% 
@@ -247,70 +118,22 @@ server <- function(input, output, session) {
                          name = ~stringr::str_trunc(name, width = 30, side = "right"),
                          marker = list(color = "#D5824D",
                                        size = 4))
-               
        } else {
            
            p
        }
-       
     })
     
 
 # Create the bar chart ----------------------------------------------------
 
-    # Use plotly proxy?
     output$bar_chart <- renderPlotly({
-        
-        ind <- which(df_for_bar()$ods_code == rv$click[1]) - 1
-        
-        df_for_bar() %>%
-            plot_ly(x = ~reorder(ods_code, get(input$variable)),
-                    y = ~get(input$variable),
-                    type = "bar",
-                    hoverinfo = "text",
-                    hovertext = paste0("Name: ", df_for_bar()$name,
-                                       "<br>ODS code: ", df_for_bar()$ods_code,
-                                       "<br>GSS code: ", df_for_bar()$gss_code,
-                                       "<br>", rv$yaxis, ": ", tidy_number(df_for_bar()[[input$variable]])),
-                    showlegend = FALSE,
-                    selectedpoints = c(106, ind),
-                    color = I("#004650"),
-                    alpha = 0.6,
-                    selected = list(marker = list(color ="#D5824D")),
-                    unselected = list(marker = list(color ="#004650",
-                                                    opacity = 0.6))) %>%
-            add_lines(y = ~median(get(input$variable), na.rm = TRUE),
-                      name = "National Median",
-                      line = list(dash = 'dot',
-                                  width = 2,
-                                  color = "#393939"),
-                      hovertext = paste0("National Median: ", tidy_number(median(df_for_bar()[[input$variable]])))) %>%
-            add_annotations(xref = "paper",
-                            yref ="y",
-                            x = 0.05,
-                            y = median(df_for_bar()[[input$variable]], na.rm = TRUE),
-                            yshift = 9,
-                            text = "<b>National median</b>",
-                            showarrow = FALSE,
-                            font = list(color = '#393939',
-                                        size = 12)) %>% 
-            layout(yaxis = list(title = rv$yaxis,
-                                tickformat = ",",
-                                rangemode = "tozero"),
-                   xaxis = list(title = list(text = paste0("<b>", rv$area,"s</b>"),
-                                             font = list(size=12),
-                                             standoff = 10),
-                                showticklabels = FALSE),
-                   hovermode = "x unified",
-                   title = list(text = stringr::str_wrap(paste0("<b>", rv$bar_title,"</b>"), width = 78),
-                                font = list(size = 12),
-                                x = 0.05,
-                                yanchor = "bottom")) %>% 
-            config(displaylogo = FALSE,
-                   modeBarButtonsToRemove = c("zoom", "pan", "select", "lasso"))
- 
+        create_bar_chart(df_for_bar(), input$variable, rv)
     })
-    
+
+
+# Render reactive text ----------------------------------------------------
+
     output$infotext <- renderText({
         create_text_output(df_for_line(), input$medicine, input$date_range, input$variable, rv)
         })
@@ -338,8 +161,7 @@ server <- function(input, output, session) {
         }
     )
     
-    #map <- reactiveValues(dat = 0)
-    
+    # library(mapview)
     # map_download_test <- reactive({
     #     leaflet(options = leafletOptions(zoomDelta = 0.25,
     #                                      zoomSnap = 0.25)) %>% 
@@ -364,6 +186,5 @@ server <- function(input, output, session) {
     #                                               file = file)
     #                                           })
 
-    # Note: if we want to use caching, RDT server must be set to False
 }
 
