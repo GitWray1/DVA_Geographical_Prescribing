@@ -11,8 +11,8 @@ library(plotly)
 
 # Source in other files ---------------------------------------------------
 
-source("loading_data.R")
-source("global_functions.R")
+source("R/load_data.R")
+source("R/global_functions.R")
 
 
 # Create Shiny UI ---------------------------------------------------------
@@ -24,7 +24,7 @@ ui <- bootstrapPage(
                    
           tabPanel("Prescribing map",
                    div(class="outer",
-                       tags$head(includeCSS("styles.css")),
+                       tags$head(includeCSS("www/styles.css")),
                        
                        leafletOutput("mymap", width = "100%", height = "100%"),
                        
@@ -32,13 +32,8 @@ ui <- bootstrapPage(
                                      draggable = TRUE, height = "auto", width = "500",
                                      top = "130", bottom = "auto", left = "20", right = "auto",
 
-                                     #h4("Use the left panel to select parameters for plotting"),
-                                     
-                                     #hr(),
-
                                      htmlOutput("infotext"),
-                                     
-                                     #hr()
+
                                      ),
                        
                        absolutePanel(id = "filterpanel", class = "panel panel-default", fixed = TRUE,
@@ -88,8 +83,10 @@ ui <- bootstrapPage(
                                                          autoClose = TRUE,
                                                          toggleSelected = FALSE,
                                                          addon = "left"),
-                                    
-                                    hr()
+                                     
+                                     hr(),
+                                     
+                                     downloadButton("mapdownload", "Download map")
                                         
                        ),
                        
@@ -97,11 +94,7 @@ ui <- bootstrapPage(
                                       draggable = TRUE, height = "auto", width = "600",
                                       top = 70, bottom = "auto", left = "auto", right = "10",
                                      
-                                     #h4("Use the left panel to select parameters for plotting"),
-                                     
                                      h4("Click on an area for further details "),
-                                     
-                                     #htmlOutput("infotext"),
                                      
                                      br(),
                                      
@@ -116,13 +109,15 @@ ui <- bootstrapPage(
                        )),
           
           tabPanel("Data",
-                   DT::dataTableOutput("data_table")#,
-                   #downloadButton("full_csv_download",
-                                  #"Download as CSV")
+                   DT::dataTableOutput("data_table"),
+                   downloadButton("download_full_csv",
+                                  "Download full dataset"),
+                   downloadButton("download_cut_csv",
+                                  "Download filtered data")
                    ),
           
           tabPanel("About this dashboard",
-                   includeMarkdown("about.rmd"))
+                   includeMarkdown("R/about.rmd"))
           )
         )
         

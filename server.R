@@ -3,6 +3,7 @@
 
 library(shiny)
 library(dplyr)
+library(mapview)
 
 # Create server  ----------------------------------------------------------
 
@@ -14,15 +15,9 @@ server <- function(input, output, session) {
         
         df %>% filter(chemical == input$medicine,
                       area_type == input$area) %>%
-              # group_by(date, chemical, bnf_code, name, ods_code, gss_code) %>%
-              # summarise("registered_patients" = sum(registered_patients),
-              #           "items" = sum(items),
-              #           "quantity" = sum(quantity),
-              #           "actual_cost" = sum(actual_cost)) %>%
-              # ungroup() %>%
-              mutate("items_per_1000" = (items/(registered_patients/1000)),
-                     "quantity_per_1000" = (quantity/(registered_patients/1000)),
-                     "actual_cost_per_1000" = (actual_cost/(registered_patients/1000)))
+               mutate("items_per_1000" = (items/(registered_patients/1000)),
+                      "quantity_per_1000" = (quantity/(registered_patients/1000)),
+                      "actual_cost_per_1000" = (actual_cost/(registered_patients/1000)))
     })
 
     df_for_bar <- reactive({
@@ -121,20 +116,17 @@ server <- function(input, output, session) {
             addProviderTiles(provider = "CartoDB.Positron")
     })
     
+    
     observeEvent(c(df_for_map(), input$variable), {
         
-        #qpal <- colorQuantile("plasma", domain = df_for_map()[[input$variable]], n = 5, na.color = "#808080")
-        
-        # qpal_colors <- unique(qpal(sort(df_for_map()[[input$variable]]))) # hex codes
-        # qpal_labs <- quantile(df_for_map()[[input$variable]], seq(0, 1, .2)) # depends on n from pal
-        # qpal_labs <- paste(round(lag(qpal_labs)), round(qpal_labs), sep = " - ")[-1] # first lag is NA
-        
-        pal <- colorBin("plasma", 
+        pal <- colorBin("plasma",
                         domain = df_for_map()[[input$variable]],
                         bins = 5,
                         na.color = "#808080")
-        #pal <- colorNumeric("plasma", domain = df_for_map()[[input$variable]])
         
+        # Run code below to have a continuous scale
+        #pal <- colorNumeric("plasma", domain = df_for_map()[[input$variable]])
+
         leafletProxy("mymap", data = df_for_map()) %>%
             clearShapes() %>%
             addPolygons(fillColor = ~pal(df_for_map()[[input$variable]]),
@@ -155,8 +147,6 @@ server <- function(input, output, session) {
             clearControls() %>%
             addLegend(position = "bottomleft",
                       pal = pal,
-                      #colors = qpal_colors,
-                      #labels = qpal_labs,
                       values = ~df_for_map()[[input$variable]],
                       title = rv$yaxis,
                       opacity = 0.7)
@@ -172,7 +162,7 @@ server <- function(input, output, session) {
                              fillcolor = "black",
                              line = list(color = "black",
                                          dash = "dot",
-                                         width = 1.5),
+                                         width = 2.5),
                              opacity = 0.3,
                              x0 = input$date_range[1],
                              x1 = input$date_range[1],
@@ -185,7 +175,7 @@ server <- function(input, output, session) {
                              fillcolor = "black",
                              line = list(color = "black",
                                          dash = "dot",
-                                         width = 1.5),
+                                         width = 2.5),
                              opacity = 0.3,
                              x0 = input$date_range[2],
                              x1 = input$date_range[2],
@@ -193,12 +183,13 @@ server <- function(input, output, session) {
                              y0 = 0,
                              y1 = 0.95,
                              yref = "paper"))
-        
 
+        # Make sure to explain how to calculate the means and sd in the about this
+        
        p <- df_for_line() %>%
             group_by(date, chemical, bnf_code) %>% 
-            summarise(mean_variable = mean(get(input$variable), na.rm = TRUE),
-                      sd_variable = sd(get(input$variable), na.rm = TRUE),
+            summarise(mean_variable = weighted.mean(get(input$variable), registered_patients, na.rm = TRUE),
+                      sd_variable = sqrt(Hmisc::wtd.var(get(input$variable), registered_patients, na.rm = TRUE)),
                       n_variable = n()) %>% 
             ungroup() %>% 
             mutate(se_variable = sd_variable/sqrt(n_variable),
@@ -221,14 +212,6 @@ server <- function(input, output, session) {
                         name = '95% CI',
                         hoverinfo = "text",
                         hovertext = "95% Confidence interval") %>% 
-            # add_trace(x = ~as.Date("2020-01-01"),
-            #           yref = "paper",
-            #           y0 = 0,
-            #           y1 = 1,
-            #           type = 'scatter', 
-            #           mode = 'lines',
-            #           line = list(color = 'black'),
-            #           name = '') %>% 
             layout(title = list(text = stringr::str_wrap(paste0("<b>", rv$line_title,"</b>"), width = 80),
                                 font = list(size = 12),
                                 x = 0.05,
@@ -332,7 +315,55 @@ server <- function(input, output, session) {
         create_text_output(df_for_line(), input$medicine, input$date_range, input$variable, rv)
         })
     
+
+# Exporting figures and data ----------------------------------------------
+
+    # Download the full data set without filters
+    output$download_full_csv <- downloadHandler(
+        filename = function() {
+            paste0(Sys.Date(), "_full_data.csv")
+        },
+        content = function(file) {
+            readr::write_csv(df, file)
+        }
+    )
     
+    # Download the data as filtered by the user in the data tab
+    output$download_cut_csv <- downloadHandler(
+        filename = function() {
+            paste0(Sys.Date(), "_filtered_data.csv")
+        },
+        content = function(file) {
+            readr::write_csv(df[input[["data_table_rows_all"]], ], file)
+        }
+    )
+    
+    #map <- reactiveValues(dat = 0)
+    
+    # map_download_test <- reactive({
+    #     leaflet(options = leafletOptions(zoomDelta = 0.25,
+    #                                      zoomSnap = 0.25)) %>% 
+    #         setView(lat = 53,
+    #                 lng = 0,
+    #                 zoom = 6.75) %>%
+    #         addProviderTiles(provider = "CartoDB.Positron")})
+    
+    # output$mapdownload <- downloadHandler(filename = paste0(Sys.Date(), "_custom_map.png"),
+    # 
+    #                                       content = function(file){
+    #                                           mapshot(x = map_object(),
+    #                                                   file = file,
+    #                                                   cliprect = "viewport",
+    #                                                   selfcontained = FALSE)
+    #                                       })
+    
+    # output$mapdownload <- downloadHandler(filename = paste0(Sys.Date(), "_custom_map.html"),
+    #                                       content = function(file){
+    #                                           htmlwidgets::saveWidget(
+    #                                               widget = map_download_test(),
+    #                                               file = file)
+    #                                           })
+
     # Note: if we want to use caching, RDT server must be set to False
 }
 

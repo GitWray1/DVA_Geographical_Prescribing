@@ -7,14 +7,14 @@ library(dplyr)
 # Load in data ------------------------------------------------------------
 
 #data_file <- "1_data_prep/output_files/DOACs_data.csv"
-data_file <- "1_data_prep/output_files/DOACs_data_long.csv"
+data_file <- "data/output_files/DOACs_data_long.csv"
 
 df <- readr::read_csv(data_file)
 
 # Load in shapefiles ------------------------------------------------------
 
 # Create list of file paths
-shape_files <- list.files(path= "1_data_prep/output_files/simplified_geojsons", 
+shape_files <- list.files(path= "data/output_files/simplified_geojsons", 
                           pattern = "*.geojson", 
                           full.names = TRUE)
 

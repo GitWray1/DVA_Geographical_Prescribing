@@ -1,18 +1,10 @@
 
-# Set up extra bits -------------------------------------------------------
-
-# Set colour pallete to use
-#pal <- colorNumeric("plasma", domain = NULL)
-#pal <- colorQuantile("plasma", domain = NULL, n = 10, na.color = "#808080")
-#pal <- colorBin("plasma", domain = input$variable, bins = 10, na.color = "#808080")
-
-
-
 # Generic functions -------------------------------------------------------
 
 # Function to format dates into 'Mon-YYYY' format
 tidy_date <- function(input_date){
-    temp <- format(lubridate::as_date(input_date), "%b %Y")
+    temp <- format(lubridate::as_date(input_date),
+                   "%b %Y")
     return(temp)
 }
 
@@ -181,27 +173,6 @@ create_text_output <- function(df, input_med, date_range, input_variable, rv){
     return(output_text)
 }
 
-
-# # # df_for_line e.g.# 
-# temp_line_df <- df %>% filter(chemical == "Apixaban",
-#               area_type == "ccg") %>%
-#     mutate("items_per_1000" = (items/(registered_patients/1000)),
-#            "quantity_per_1000" = (quantity/(registered_patients/1000)),
-#            "actual_cost_per_1000" = (actual_cost/(registered_patients/1000)))
-# 
-# temp_bar_df <- temp_line_df %>%
-#     filter(date >= "2021-01-01",
-#            date <= "2021-12-01") %>%
-#     group_by(chemical, bnf_code, name, ods_code, gss_code) %>%
-#     summarise("registered_patients" = sum(registered_patients),
-#               "items" = sum(items),
-#               "quantity" = sum(quantity),
-#               "actual_cost" = sum(actual_cost)) %>%
-#     ungroup() %>%
-#     mutate("items_per_1000" = (items/(registered_patients/1000)),
-#            "quantity_per_1000" = (quantity/(registered_patients/1000)),
-#            "actual_cost_per_1000" = (actual_cost/(registered_patients/1000))) %>%
-#     select(-registered_patients)
 
 
 # Functions to make line chart --------------------------------------------
