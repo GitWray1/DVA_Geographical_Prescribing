@@ -100,28 +100,7 @@ server <- function(input, output, session) {
 # Create the line chart ---------------------------------------------------
     
     output$line_chart <- renderPlotly({
-        
-        p <- create_line_chart(df_for_line(), input$variable, input$date_range, rv)
-
-       if (!is.null(rv$click)) {
-           
-           temp_df <- df_for_line() %>% 
-                            filter(ods_code == rv$click[1])
-           
-           p %>% 
-               add_trace(data = temp_df,
-                         y = ~tidy_number(temp_df[[input$variable]]),
-                         type = "scatter",
-                         mode = "lines+markers",
-                         line = list(color = "#D5824D"),
-                         connectgaps = TRUE,
-                         name = ~stringr::str_trunc(name, width = 30, side = "right"),
-                         marker = list(color = "#D5824D",
-                                       size = 4))
-       } else {
-           
-           p
-       }
+        create_line_chart(df_for_line(), input$variable, input$date_range, rv)
     })
     
 

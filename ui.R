@@ -13,6 +13,9 @@ library(plotly)
 
 source("R/load_data.R")
 source("R/global_functions.R")
+source("R/map_functions.R")
+source("R/line_bar_functions.R")
+source("R/text_function.R")
 
 # Make sure to explain how to calculate the means and sd in the about page
 
