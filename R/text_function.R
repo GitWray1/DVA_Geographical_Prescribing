@@ -33,7 +33,7 @@ create_text_output <- function(df, input_med, input_dates, input_variable, rv){
             TRUE ~ "Error, possible 0 or missing value")
         
         # Build the text
-        output_text <- paste0("The <b>", stringr::str_to_lower(rv$yaxis), "</b> of <b>", input_med, "</b> prescribed in England", " changed from <b>", tidy_number(start_val), 
+        output_text <- paste0("The <b>", stringr::str_to_lower(get_y_title(input_variable)), "</b> of <b>", input_med, "</b> prescribed in England", " changed from <b>", tidy_number(start_val), 
                               "</b> in <b>", date1, "</b> to <b>", tidy_number(end_val), "</b> in <b>", date2, "</b>")
         
         if (diff_percentage != 0){
@@ -60,7 +60,7 @@ create_text_output <- function(df, input_med, input_dates, input_variable, rv){
             TRUE ~ "Error, possible 0 or missing value")
         
         # Build the dynamic text
-        output_text <- paste0("The <b>", stringr::str_to_lower(rv$yaxis), "</b> of <b>", input_med, "</b> prescribed in <b>", 
+        output_text <- paste0("The <b>", stringr::str_to_lower(get_y_title(input_variable)), "</b> of <b>", input_med, "</b> prescribed in <b>", 
                               area_name, "</b> changed from <b>", tidy_number(start_val), "</b> on <b>", 
                               date1, "</b> to <b>", tidy_number(end_val), "</b> on <b>", date2,"</b>")
         

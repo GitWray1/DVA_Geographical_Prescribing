@@ -51,21 +51,24 @@ get_y_title <- function(input_variable){
 # Get title for line chart
 get_line_title <- function(rv_var, input_med){
     
-    temp <- paste0(rv_var, " of ", input_med, " prescribed in England over the last 5 years")
+    yaxis <- get_y_title(rv_var)
+    
+    temp <- paste0(yaxis, " of ", input_med, " prescribed in England over the last 5 years")
     return(temp)
 }
 
 # Get title for bar chart 
 get_bar_title <- function(rv_var, input_med, input_area, input_dates){
     
+    yaxis <- get_y_title(rv_var)
+    
     date1 <- tidy_date(input_dates[1])
     date2 <- tidy_date(input_dates[2])
     
-    temp <- paste0("Total ",stringr::str_to_lower(rv_var), " of ", input_med, " prescribed between ", date1, 
+    temp <- paste0("Total ",stringr::str_to_lower(yaxis), " of ", input_med, " prescribed between ", date1, 
                    " and ", date2, " by ", input_area)
     return(temp)
 }
-
 
 # Create line chart -------------------------------------------------------
 
@@ -89,7 +92,7 @@ define_vline <- function(input_date){
 
 # Function to make line chart
 
-create_line_chart <- function(line_df, input_variable, input_dates, rv){
+create_line_chart <- function(line_df, input_variable, input_dates, rv, input_med){
     
     p <- line_df %>%
         group_by(date, chemical, bnf_code) %>% 
@@ -117,11 +120,11 @@ create_line_chart <- function(line_df, input_variable, input_dates, rv){
                     name = '95% CI',
                     hoverinfo = "text",
                     hovertext = "95% Confidence interval") %>% 
-        layout(title = list(text = stringr::str_wrap(paste0("<b>", rv$line_title,"</b>"), width = 80),
+        layout(title = list(text = stringr::str_wrap(paste0("<b>", get_line_title(input_variable, input_med),"</b>"), width = 80),
                             font = list(size = 12),
                             x = 0.05,
                             yanchor = "bottom"),
-               yaxis = list(title = rv$yaxis,
+               yaxis = list(title = get_y_title(input_variable),
                             tickformat = ",",
                             rangemode = "tozero"),
                xaxis = list(title = FALSE,
@@ -163,7 +166,7 @@ create_line_chart <- function(line_df, input_variable, input_dates, rv){
 
 # Create bar chart --------------------------------------------------------
 
-create_bar_chart <- function(bar_df, input_variable, rv){
+create_bar_chart <- function(bar_df, input_variable, rv, input_dates, input_med, input_area){
     
     click_index <- which(bar_df$ods_code == rv$click[1]) - 1
     
@@ -175,7 +178,7 @@ create_bar_chart <- function(bar_df, input_variable, rv){
                 hovertext = paste0("Name: ", bar_df$name,
                                    "<br>ODS code: ", bar_df$ods_code,
                                    "<br>GSS code: ", bar_df$gss_code,
-                                   "<br>", rv$yaxis, ": ", tidy_number(bar_df[[input_variable]])),
+                                   "<br>", get_y_title(input_variable), ": ", tidy_number(bar_df[[input_variable]])),
                 showlegend = FALSE,
                 selectedpoints = c(106, click_index),
                 color = I("#004650"),
@@ -198,15 +201,15 @@ create_bar_chart <- function(bar_df, input_variable, rv){
                         showarrow = FALSE,
                         font = list(color = '#393939',
                                     size = 12)) %>% 
-        layout(yaxis = list(title = rv$yaxis,
+        layout(yaxis = list(title = get_y_title(input_variable),
                             tickformat = ",",
                             rangemode = "tozero"),
-               xaxis = list(title = list(text = paste0("<b>", rv$area,"s</b>"),
+               xaxis = list(title = list(text = paste0("<b>", get_tidy_area(input_area),"s</b>"),
                                          font = list(size=12),
                                          standoff = 10),
                             showticklabels = FALSE),
                hovermode = "x unified",
-               title = list(text = stringr::str_wrap(paste0("<b>", rv$bar_title,"</b>"), width = 78),
+               title = list(text = stringr::str_wrap(paste0("<b>", get_bar_title(input_variable, input_med, get_tidy_area(input_area), input_dates),"</b>"), width = 78),
                             font = list(size = 12),
                             x = 0.05,
                             yanchor = "bottom")) %>% 
