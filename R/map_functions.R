@@ -1,4 +1,12 @@
 
+
+# Filter for map ----------------------------------------------------------
+
+filter_for_map <- function(bar_df, shape_files){
+    temp <- shp_files %>% inner_join(bar_df)
+    return(temp)
+}
+
 # Create the base map -----------------------------------------------------
 
 create_start_map <- function(){

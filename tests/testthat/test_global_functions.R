@@ -1,7 +1,6 @@
 
-library(testthat)
-
 source("R/global_functions.R")
+library(testthat)
 
 # All unit tests are made up of an expect_ function
 # The context("describe context") line allows us to group tests with the 
@@ -17,8 +16,14 @@ test_that("tidy_date() returns expected values", {
     expect_equal(tidy_date(test1), "Jun 2021")
     expect_equal(tidy_date(test2), "Jun 2021")
     expect_equal(tidy_date(test3), "Feb 2020")
-    expect_equal(class(tidy_date(test1)), "character")
-    expect_equal(class(tidy_date(test2)), "character")
+})
+
+context("Class checks")
+test_that("tidy_date() returns expected class", {
+    test1 <- "2021-06-01" # character format
+    test2 <- lubridate::as_date("2021-06-01") # date format
+    expect_match(class(tidy_date(test1)), "character")
+    expect_match(class(tidy_date(test2)), "character")
 })
 
 context("Error checks")
@@ -48,22 +53,21 @@ test_that("tidy_number() returns expected values", {
     expect_equal(tidy_number(test1), "2,000")
     expect_equal(tidy_number(test2), "10,000.55")
     expect_equal(tidy_number(test3), "1,500")
+})
+
+context("Class checks")
+test_that("tidy_number() returns expected class", {
+    test1 <- 2000L # integer format
+    test2 <- 10000.548 # double format
     expect_equal(class(tidy_number(test1)), "character")
+    expect_equal(class(tidy_number(test2)), "character")
 })
 
 context("Error checks")
 test_that("tidy_number() deals with errors correctly", {
-    test1 <- matrix() # not vector
-    test2 <- double() # empty vector
-    test3 <- "2000" # wrong class
+    test1 <- c() # wrong length
     expect_error(tidy_number(test1), 
-                 "Input must be a vector",
-                 fixed = TRUE)
-    expect_error(tidy_number(test2), 
-                 "Input vector must be non-zero length",
-                 fixed = TRUE)
-    expect_error(tidy_number(test3), 
-                 "Input must be a numeric",
+                 "Input vector must of non-zero length",
                  fixed = TRUE)
 })
 
@@ -83,14 +87,16 @@ test_that("get_tidy_area() returns expected values", {
     expect_equal(class(get_tidy_area(test1)), "character")
 })
 
+context("class checks")
+test_that("get_tidy_area() returns expected class", {
+    test1 <- "ccg"
+    expect_equal(class(get_tidy_area(test1)), "character")
+})
+
 context("Error checks")
 test_that("get_tidy_area() deals with errors correctly", {
-    test1 <- matrix() # not vector
-    test2 <- character() # empty vector
+    test1 <- character() # empty vector
     expect_error(get_tidy_area(test1), 
-                 "Input must be a vector",
-                 fixed = TRUE)
-    expect_error(get_tidy_area(test2), 
                  "Input vector must be non-zero length",
                  fixed = TRUE)
 })

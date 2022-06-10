@@ -21,7 +21,7 @@ server <- function(input, output, session) {
     })
     
     df_for_map <- reactive({
-        shp_files %>% inner_join(df_for_bar())
+        filter_for_map(df_for_bar(), shp_files)
     })
 
 

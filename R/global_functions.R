@@ -52,14 +52,14 @@ tidy_date <- function(date){
 #' @author Jonathan Wray
 
 tidy_number <- function(number){
-    if (!is.vector(number)) {
-        stop("Input must be a vector")
-    }
+    
+    # cannot say of length 1 because at one point I pass a vector to calculate 
+    # all labels
     if (length(number) == 0) {
-        stop("Input vector must be non-zero length")
+        stop("Input vector must of non-zero length")
     }
-    if (!is.numeric(number)) {
-        stop("Input must be a numeric")
+    if(!is.numeric(number)) {
+        number <- as.character(number)
     }
     
     temp <- format(as.numeric(number),
@@ -70,7 +70,6 @@ tidy_number <- function(number){
                    drop0trailing = TRUE)
     return(temp)
 }
-
 
 # Get tidy area name ------------------------------------------------------
 
@@ -87,9 +86,7 @@ tidy_number <- function(number){
 #' @author Jonathan Wray
 
 get_tidy_area <- function(input_area) {
-    if (!is.vector(input_area)) {
-        stop("Input must be a vector")
-    }
+    
     if (length(input_area) == 0) {
         stop("Input vector must be non-zero length")
     }
