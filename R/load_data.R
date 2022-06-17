@@ -6,8 +6,9 @@ library(dplyr)
 
 # Load in data ------------------------------------------------------------
 
-#data_file <- "1_data_prep/output_files/DOACs_data.csv"
 data_file <- "data/output_files/DOACs_data_long.csv"
+#data_file <- "data/test_data/DOACs_data_nhs_manc_edox_0.csv"
+#data_file <- "data/test_data/DOACs_data_nhs_manc_edox_na.csv"
 
 df <- readr::read_csv(data_file)
 

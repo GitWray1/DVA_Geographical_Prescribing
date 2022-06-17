@@ -1,36 +1,4 @@
 
-# Functions to filter data ------------------------------------------------
-
-filter_for_line <- function(df, input_med, input_area){
-    
-    temp <- df %>% 
-        filter(chemical == input_med,
-               area_type == input_area) %>%
-        mutate(items_per_1000 = (items/(registered_patients/1000)),
-               quantity_per_1000 = (quantity/(registered_patients/1000)),
-               actual_cost_per_1000 = (actual_cost/(registered_patients/1000)))
-    return(temp)
-}
-
-filter_for_bar <- function(line_df, input_dates){
-    
-    temp <- line_df %>% 
-        filter(date >= input_dates[1],
-               date <= input_dates[2]) %>% 
-        group_by(chemical, bnf_code, name, ods_code, gss_code) %>% 
-        summarise(registered_patients = sum(registered_patients),
-                  items = sum(items), 
-                  quantity = sum(quantity), 
-                  actual_cost = sum(actual_cost)) %>% 
-        ungroup() %>% 
-        mutate(items_per_1000 = (items/(registered_patients/1000)),
-               quantity_per_1000 = (quantity/(registered_patients/1000)),
-               actual_cost_per_1000 = (actual_cost/(registered_patients/1000))) %>% 
-        select(-registered_patients)
-    return(temp)
-}
-
-
 # Functions for chart labels and titles -----------------------------------
 
 # Get titles for line and bar chart y axes

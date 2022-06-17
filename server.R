@@ -61,31 +61,6 @@ server <- function(input, output, session) {
     observeEvent(input$area, {
         rv$click <- NULL
     })
-    
-    
-    # Update Y axis title and store as reactive variable for use in plots
-    # observeEvent(input$variable, {
-    #     rv$yaxis <- get_y_title(input$variable)
-    #     })
-    # 
-    # Update Y axis title and store as reactive variable for use in plots
-    # observeEvent(input$area, {
-    #     
-    #     rv$area <- case_when(input$area == "ccg" ~ "CCG",
-    #                          input$area == "stp" ~ "STP",
-    #                          input$area == "region" ~ "Region",
-    #                          TRUE ~ "Unknown area input")
-    # })
-    
-    # Update line chart title and store as reactive variable
-    # observeEvent(c(rv$yaxis, input$medicine), {
-    #     rv$line_title <- get_line_title(rv$yaxis, input$medicine)
-    #     })
-    
-    # Update bar chart title and store as reactive variable
-    # observeEvent(c(rv$yaxis, input$medicine, input$area, input$date_range), {
-    #     rv$bar_title <- get_bar_title(rv$yaxis, input$medicine, rv$area, input$date_range)
-    #     })
 
 
 # Create the leaflet map --------------------------------------------------
