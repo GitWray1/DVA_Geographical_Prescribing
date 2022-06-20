@@ -136,11 +136,11 @@ create_line_chart <- function(line_df, input_variable, input_dates, rv, input_me
 
 create_bar_chart <- function(bar_df, input_variable, rv, input_dates, input_med, input_area){
     
-    browser()
-    
-    bar_df <- bar_df %>% filter(!is.na(input_variable))
+    bar_df <- bar_df %>% arrange(get(input_variable))
     
     click_index <- which(bar_df$ods_code == rv$click[1]) - 1
+    
+    median_var <- median(bar_df[[input_variable]], na.rm = TRUE)
     
     temp <- bar_df %>%
         plot_ly(x = ~reorder(ods_code, get(input_variable)),
@@ -163,11 +163,11 @@ create_bar_chart <- function(bar_df, input_variable, rv, input_dates, input_med,
                   line = list(dash = 'dot',
                               width = 2,
                               color = "#393939"),
-                  hovertext = paste0("National Median: ", tidy_number(median(bar_df[[input_variable]], na.rm = TRUE)))) %>%
+                  hovertext = paste0("National Median: ", tidy_number(median_var))) %>%
         add_annotations(xref = "paper",
                         yref ="y",
                         x = 0.05,
-                        y = median(bar_df[[input_variable]], na.rm = TRUE),
+                        y = median_var,
                         yshift = 9,
                         text = "<b>National median</b>",
                         showarrow = FALSE,
