@@ -17,7 +17,6 @@
 #' @author Jonathan Wray
 
 filter_for_line <- function(df, input_med, input_area){
-    
     # check that the column names (above) are in the dataframe
     names <- c("chemical", "area_type", "items", "quantity", "actual_cost", "registered_patients")
     if (sum(names %in% colnames(df)) != length(names)) {
@@ -78,7 +77,13 @@ filter_for_bar <- function(line_df, input_dates){
                quantity_per_1000 = (quantity/(registered_patients/1000)),
                actual_cost_per_1000 = (actual_cost/(registered_patients/1000))) %>% 
         select(-registered_patients)
-    return(temp)
+    
+    if (nrow(temp) > 0) {
+        return(temp)  
+    } else {
+        stop("0 rows have been returned, please check input data")
+    }
+    
 }
 
 

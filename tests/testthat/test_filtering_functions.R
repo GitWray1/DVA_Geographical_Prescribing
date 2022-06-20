@@ -62,6 +62,7 @@ test_that("filter_for_line() deals with errors correctly", {
 
 # Filter for bar tests ----------------------------------------------------
 
+# Example bar output 1
 bar_out_df1 <- line_out_df1 %>% 
             filter(date >= "2020-01-01",
                    date <= "2020-12-31") %>% 
@@ -76,6 +77,7 @@ bar_out_df1 <- line_out_df1 %>%
                    actual_cost_per_1000 = (actual_cost/(registered_patients/1000))) %>% 
             select(-registered_patients)
 
+# Example bar output 2
 bar_out_df2 <- line_out_df2 %>% 
             filter(date >= "2021-01-01",
                    date <= "2021-06-30") %>% 
@@ -118,8 +120,10 @@ test_that("filter_for_bar() deals with errors correctly", {
 
 # Filter for map tests ----------------------------------------------------
 
+# Example map output 1
 map_out_df1 <- shp_files %>% inner_join(bar_out_df1)
 
+# Example map output 2
 map_out_df2 <- shp_files %>% inner_join(bar_out_df2)
 
 context("filter_for_map value checks")

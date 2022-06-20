@@ -12,6 +12,7 @@ library(plotly)
 # Source in other files ---------------------------------------------------
 
 source("R/load_data.R")
+source("R/filtering_functions.R")
 source("R/global_functions.R")
 source("R/map_functions.R")
 source("R/line_bar_functions.R")
