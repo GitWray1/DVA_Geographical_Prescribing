@@ -1,12 +1,6 @@
 
 # Function to get reactive text ------------------------------------------
 
-get_value <- function(df, input_variable, input_date){
-    df[df$date == input_date, input_variable]
-}
-
-test <- get_value(line_out_df1, "items", "2021-01-01")
-
 create_text_output <- function(df, input_med, input_dates, input_variable, rv){
     
     date1 <- tidy_date(input_dates[1])

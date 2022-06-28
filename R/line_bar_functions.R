@@ -59,7 +59,6 @@ define_vline <- function(input_date){
 }
 
 # Function to make line chart
-
 create_line_chart <- function(line_df, input_variable, input_dates, rv, input_med){
     
     p <- line_df %>%

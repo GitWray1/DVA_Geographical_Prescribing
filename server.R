@@ -115,15 +115,6 @@ server <- function(input, output, session) {
         }
     )
     
-    # library(mapview)
-    # map_download_test <- reactive({
-    #     leaflet(options = leafletOptions(zoomDelta = 0.25,
-    #                                      zoomSnap = 0.25)) %>% 
-    #         setView(lat = 53,
-    #                 lng = 0,
-    #                 zoom = 6.75) %>%
-    #         addProviderTiles(provider = "CartoDB.Positron")})
-    
     # output$mapdownload <- downloadHandler(filename = paste0(Sys.Date(), "_custom_map.png"),
     # 
     #                                       content = function(file){

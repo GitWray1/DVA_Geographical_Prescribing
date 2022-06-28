@@ -16,7 +16,7 @@ source("R/filtering_functions.R")
 source("R/global_functions.R")
 source("R/map_functions.R")
 source("R/line_bar_functions.R")
-source("R/text_function.R")
+source("R/working_text.R")
 
 # Make sure to explain how to calculate the means and sd in the about page
 
