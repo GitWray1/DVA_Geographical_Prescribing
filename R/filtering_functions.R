@@ -62,6 +62,10 @@ filter_for_bar <- function(line_df, input_dates){
                "items", "quantity", "actual_cost", "registered_patients")
     if (sum(names %in% colnames(line_df)) != length(names)) {
         stop("Dataframe must contain correct column names")
+    } 
+    if (length(input_dates) < 2) {
+        input_dates[1] = min(line_df$date)
+        input_dates[2] = max(line_df$date)
     }
     
     temp <- line_df %>% 

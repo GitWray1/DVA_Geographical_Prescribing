@@ -61,6 +61,11 @@ define_vline <- function(input_date){
 # Function to make line chart
 create_line_chart <- function(line_df, input_variable, input_dates, rv, input_med){
     
+    if (length(input_dates) < 2) {
+        input_dates[1] = min(line_df$date)
+        input_dates[2] = max(line_df$date)
+    }
+    
     p <- line_df %>%
         group_by(date, chemical, bnf_code) %>% 
         summarise(mean_variable = weighted.mean(get(input_variable), registered_patients, na.rm = TRUE),

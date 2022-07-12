@@ -60,31 +60,25 @@ get_nat_average <- function(df, input_variable) {
     return(temp)
 }
 
-# Calculate average for area
-get_area_sum <- function(df, input_variable) {
-    temp <- df %>% 
-        select(input_variable) %>% 
-        as.numeric()
-    return(temp)
-}
-
 get_output_text <- function(df, input_med, input_dates, input_variable, rv) {
     
-    browser()
+    # National average for medicine for each month, across all areas
     time_aggregated_df <- get_time_aggregate_df(df, input_dates, clicked_area = NULL)
     
-    nat_average <- get_nat_average(time_aggregated_df, input_variable)
+    # Mean across all months for variable of interest
+    nat_average <- sum(time_aggregated_df[[input_variable]]/106, na.rm = TRUE)
     
     if (!is.null(rv$click)) {
-      
-        area_aggregated_df <- get_time_aggregate_df(df, input_variable, clicked_area = rv$click[1])
+        # Monthly average for clicked area
+        area_aggregated_df <- get_time_aggregate_df(df, input_dates, clicked_area = rv$click[1])
         
-        area_sum <- get_area_sum(area_aggregated, input_variable)
-        
+        # Mean sum across 
+        area_sum <- sum(area_aggregated_df[[input_variable]], na.rm = TRUE)
+    
     }
     
     # Extract each variable needed for the dynamic text 
-        
+ 
     start_val <- ifelse(is.null(rv$click), 
                         time_aggregated_df[time_aggregated_df$date == input_dates[1], input_variable], 
                         area_aggregated_df[area_aggregated_df$date == input_dates[1], input_variable]) %>% 
@@ -95,7 +89,7 @@ get_output_text <- function(df, input_med, input_dates, input_variable, rv) {
                         area_aggregated_df[area_aggregated_df$date == input_dates[2], input_variable]) %>% 
                 as.numeric()
         
-    area_name <- get_area_name(df, rv)
+    area_name <- as.character(get_area_name(df, rv))
     percent_change <- get_percent_change(start_val, end_val)
     change_direction <- get_change_direction(percent_change)
     
@@ -110,25 +104,22 @@ get_output_text <- function(df, input_med, input_dates, input_variable, rv) {
     } else {
         output_text <- paste0(output_text, ".<b> No change</b> was observed over the period.")
     }
-    return(output_text)
-}
-
-
-# Create text output function ---------------------------------------------
-
-create_text_output <- function(df, input_med, input_dates, input_variable, rv) {
     
-    output_text <- get_output_text(df, input_med, input_dates, input_variable, rv)
-    
-    # if (is.null(rv$click)){ # No area selected
-    # 
-    #     output_text <- get_output_text(df, input_med, input_dates, input_variable, rv)
-    # 
-    # } else { # Area selected
-    # 
-    #     output_text <- get_output_text(df, input_med, input_dates, input_variable, rv)
-    #     # add second sentence
+    # if (!is.null(rv$click)){
+    #     
+    #     diff_percentage <- get_percent_change(nat_average, area_sum)
+    #     
+    #     # Calculate increase/decrease
+    #     change_direction <- case_when(
+    #         diff_percentage > 0 ~ paste0("was <b>", tidy_number(diff_percentage), "%</b> " ,"above the national average."),
+    #         diff_percentage < 0 ~ paste0("was <b>", tidy_number(abs(diff_percentage)), "%</b> " ,"below the national average."),
+    #         diff_percentage == 0 ~ " <b>did not differ</b> from the national average.",
+    #         TRUE ~ "Error, possible 0 or missing value.")
+    #     
+    #     # Add the final sentence
+    #     output_text <- paste0(output_text, " Total prescribing of <b>", input_med,"</b> across this period ", change_direction)
     # }
     
     return(output_text)
 }
+

@@ -5,17 +5,26 @@ output: html_document
 
 ### Last update
 
-This page was last updated on 24th April 2022.
+This page was last updated on 12th July 2022.
 
 
 ### How to use this dashboard
 
-Here is some example text to use on this dashboard
+This prototype dashboard has been populated with data on the prescribing of direct oral anticoagulants (DOACs) in England. There are two tabs available for users to explore this data:
 
+The **Prescribing map tab** allows users to select their medicine, variable, health area and date range of interest. As the user modifies these inputs the map will dynamically update to show the the presribing for the selected medicine and variable aggregated across the date range. 
+
+The line chart to the right shows the average prescribing across the selected health areas along with 95% confidence intervals (e.g. the average items across all 106 CCGs). The bar chart beneath allows comparison of all individual areas compared to the national median.
+
+A user may click on an individual area of the map to highlight this specific area on the line and bar charts, allowing comparison to the national trends. 
+
+All charts are interactive and will show individual values when hovered over. Charts can also be downloaded via the hover ribbon in the top right of each chart. 
+
+The **Data tab** allows users to explore the underlying data by adding their own filters. Users may download the full or filtered dataset. 
 
 ### Data sources
 
-**Prescribing data** is requested from the [OpenPrescribing FAQs][1], which provides a search interface for the [English Prescribing Dataset][3], published by the NHS Business Services Authority (NHSBSA).
+**Prescribing and population data** was requested from the [OpenPrescribing API][2], which provides a search interface for the [English Prescribing Dataset][3], published by the NHS Business Services Authority (NHSBSA).
 
 **BNF codes and names** are taken from the NHSBSA [Information Services Portal][4].
 
@@ -28,7 +37,7 @@ All data is used under the terms of the Open Government Licence
 
 ### Data definitions 
 
-The definitions below were taken directly from [OpenPrescribing.net][6]. For more information we recommend reading the [OpenPrescribing FAQs][1]. 
+The definitions below were taken directly from [OpenPrescribing.net][6]. For more information we recommend reading the [OpenPrescribing FAQs][1].
 
 **Items** shows the number of times a medicine has been prescribed. It says nothing about how much of it has been prescribed (for that see quantity) as some presciptions will be for many weeks’ worth of treatment while others will be much smaller.
 
@@ -49,13 +58,14 @@ Care must be taken when adding together quantities. Obviously quantities cannot 
 
 ### Code
 
-The code used to build this dashboard are available on [GitHub][7]
+The code used to build this dashboard is available on [GitHub][7]
 
 
 ### Contact information
 
-Insert contact information when complete
+Dr Jonathan Wray, Impact team, National Institute for Health and Care Excellence 
 
+Please send any feedback to jonathan.wray@nice.org.uk or impact@nice.org.uk
 
 [1]: https://openprescribing.net/faq/ "OpenPrescribing FAQs"
 [2]: https://openprescribing.net/api/ "OpenPrescribing API"
@@ -63,4 +73,4 @@ Insert contact information when complete
 [4]: https://www.nhsbsa.nhs.uk/access-our-data-products/information-services-portal-isp "Information Services Portal"
 [5]: https://geoportal.statistics.gov.uk/ "Open Geography Portal"
 [6]: https://openprescribing.net/ "OpenPrescribing.net"
-[7]: "GitHub"
+[7]: https://github.com/GitWray1/DVA_Geographical_Prescribing "Github"

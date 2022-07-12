@@ -16,6 +16,7 @@ source("R/filtering_functions.R")
 source("R/global_functions.R")
 source("R/map_functions.R")
 source("R/line_bar_functions.R")
+#source("R/text_function.R")
 source("R/working_text.R")
 
 # Make sure to explain how to calculate the means and sd in the about page
@@ -79,7 +80,7 @@ ui <- bootstrapPage(
                                      airMonthpickerInput("date_range",
                                                          "Select date range",
                                                          range = TRUE,
-                                                         value = c(lubridate::as_date(max(df$date)) - lubridate::period("1 year"),
+                                                         value = c(lubridate::as_date(max(df$date)) - lubridate::period("11 months"),
                                                                    lubridate::as_date(max(df$date))),
                                                          dateFormat = "M yyyy",
                                                          minDate = lubridate::as_date(min(df$date)),
