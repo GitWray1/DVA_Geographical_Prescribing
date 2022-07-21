@@ -21,7 +21,7 @@ update_map <- function(map_df, input_variable, pal, rv){
                     domain = map_df[[input_variable]],
                     bins = 5,
                     na.color = "#808080")
-    #pal <- colorNumeric("plasma", domain = df_for_map()[[input$variable]])
+    #pal <- colorNumeric("plasma", domain = df_for_map()[[input$variable]]) # continuous
     
     temp <- leafletProxy("mymap", data = map_df) %>%
         clearShapes() %>%

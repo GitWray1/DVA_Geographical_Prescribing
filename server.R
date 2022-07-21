@@ -89,7 +89,6 @@ server <- function(input, output, session) {
 # Render reactive text ----------------------------------------------------
 
     output$infotext <- renderText({
-        #create_text_output(df_for_line(), input$medicine, input$date_range, input$variable, rv)
         get_output_text(df_for_line(), input$medicine, input$date_range, input$variable, rv)
         })
     

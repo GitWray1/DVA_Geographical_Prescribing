@@ -12,15 +12,15 @@ This page was last updated on 12th July 2022.
 
 This prototype dashboard has been populated with data on the prescribing of direct oral anticoagulants (DOACs) in England. There are two tabs available for users to explore this data:
 
-The **Prescribing map tab** allows users to select their medicine, variable, health area and date range of interest. As the user modifies these inputs the map will dynamically update to show the the presribing for the selected medicine and variable aggregated across the date range. 
+The **Prescribing map** tab allows users to select their medicine, variable, health area and date range of interest. As the user modifies these inputs the map will dynamically update to show the the prescribing for the selected medicine and variable aggregated across the date range. 
 
 The line chart to the right shows the average prescribing across the selected health areas along with 95% confidence intervals (e.g. the average items across all 106 CCGs). The bar chart beneath allows comparison of all individual areas compared to the national median.
 
-A user may click on an individual area of the map to highlight this specific area on the line and bar charts, allowing comparison to the national trends. 
+A user may click on an individual area of the map to highlight this area on the line and bar charts, allowing comparison to national trends.
 
 All charts are interactive and will show individual values when hovered over. Charts can also be downloaded via the hover ribbon in the top right of each chart. 
 
-The **Data tab** allows users to explore the underlying data by adding their own filters. Users may download the full or filtered dataset. 
+The **Data** tab allows users to explore the underlying data by adding their own filters. Users may download the full or filtered dataset. 
 
 ### Data sources
 

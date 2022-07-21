@@ -53,8 +53,6 @@ tidy_date <- function(date){
 
 tidy_number <- function(number){
     
-    # cannot say of length 1 because at one point I pass a vector to calculate 
-    # all labels
     if (length(number) == 0) {
         stop("Input vector must of non-zero length")
     }
@@ -102,6 +100,4 @@ get_tidy_area <- function(input_area) {
     
     return(temp)
 }
-
-#input_med, input_variable, input_med, input_area, input_dates
               

@@ -6,9 +6,9 @@ library(dplyr)
 
 # Load in data ------------------------------------------------------------
 
-#data_file <- "data/output_files/DOACs_data_long.csv"
-#data_file <- "data/test_data/DOACs_data_nhs_manc_edox_0.csv"
-data_file <- "data/test_data/DOACs_data_nhs_manc_edox_na.csv"
+data_file <- "data/output_files/DOACs_data_long.csv"
+#data_file <- "data/test_data/DOACs_data_nhs_manc_edox_0.csv" # test with 0s
+#data_file <- "data/test_data/DOACs_data_nhs_manc_edox_na.csv" # test with NAs
 
 df <- readr::read_csv(data_file)
 
