@@ -86,8 +86,6 @@ create_text_output <- function(df, input_med, input_dates, input_variable, rv){
             summarise(across(everything(), mean)) %>% 
             as.numeric()
         
-        browser()
-        
         # Calculate average for area
         area_sum <- df %>% 
             filter(date >= input_dates[1],

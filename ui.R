@@ -120,7 +120,7 @@ ui <- bootstrapPage(
                    ),
           
           tabPanel("About this dashboard",
-                   includeMarkdown("R/about.rmd"))
+                   includeMarkdown("R/about.Rmd"))
           )
         )
         
