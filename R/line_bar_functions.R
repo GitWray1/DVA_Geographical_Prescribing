@@ -82,11 +82,11 @@ create_line_chart <- function(line_df, input_variable, input_dates, rv, input_me
                 line = list(color = "#004650"),
                 hoverinfo = "name+x+y",
                 name = 'National Average',
-                marker = list(color = "#004650",
+                marker = list(color = "#00436C",  #old = #004650
                               size = 4)) %>%
         add_ribbons(ymin = ~round(lower_ci, 2),
                     ymax = ~round(upper_ci, 2),
-                    fillcolor = 'rgba(0,70,80,0.2)',
+                    fillcolor = 'rgba(0, 67, 108, 0.25)',  #old = #rgba(0,70,80,0.2)
                     line = list(color = 'transparent'),
                     marker = list(color = "transparent"),
                     name = '95% CI',
@@ -123,7 +123,7 @@ create_line_chart <- function(line_df, input_variable, input_dates, rv, input_me
                       y = ~tidy_number(temp_df[[input_variable]]),
                       type = "scatter",
                       mode = "lines+markers",
-                      line = list(color = "#D5824D"),
+                      line = list(color = "#D17C4D"),   #old = #D5824D
                       connectgaps = TRUE,
                       name = ~stringr::str_trunc(name, width = 30, side = "right"),
                       marker = list(color = "#D5824D",
@@ -157,11 +157,11 @@ create_bar_chart <- function(bar_df, input_variable, rv, input_dates, input_med,
                                    "<br>", get_y_title(input_variable), ": ", tidy_number(bar_df[[input_variable]])),
                 showlegend = FALSE,
                 selectedpoints = c(106, click_index),
-                color = I("#004650"),
+                color = I("#00436C"),  #old = #004650
                 alpha = 0.6,
-                selected = list(marker = list(color ="#D5824D")),
-                unselected = list(marker = list(color ="#004650",
-                                                opacity = 0.6))) %>%
+                selected = list(marker = list(color ="#D17C4D")),   #old = #D5824D
+                unselected = list(marker = list(color ="#80A1B5",   #old = #004650
+                                                opacity = 1))) %>%  #old = 0.6
         add_lines(y = ~median(get(input_variable), na.rm = TRUE),
                   name = "National Median",
                   line = list(dash = 'dot',
