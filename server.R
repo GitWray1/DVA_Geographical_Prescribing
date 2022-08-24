@@ -21,7 +21,7 @@ server <- function(input, output, session) {
     })
     
     df_for_map <- reactive({
-        shp_files %>% inner_join(df_for_bar())
+        filter_for_map(df_for_bar(), shp_files)
     })
 
 
@@ -61,31 +61,6 @@ server <- function(input, output, session) {
     observeEvent(input$area, {
         rv$click <- NULL
     })
-    
-    
-    # Update Y axis title and store as reactive variable for use in plots
-    observeEvent(input$variable, {
-        rv$yaxis <- get_y_title(input$variable)
-        })
-    
-    # Update Y axis title and store as reactive variable for use in plots
-    observeEvent(input$area, {
-        
-        rv$area <- case_when(input$area == "ccg" ~ "CCG",
-                             input$area == "stp" ~ "STP",
-                             input$area == "region" ~ "Region",
-                             TRUE ~ "Unknown area input")
-    })
-    
-    # Update line chart title and store as reactive variable
-    observeEvent(c(rv$yaxis, input$medicine), {
-        rv$line_title <- get_line_title(rv$yaxis, input$medicine)
-        })
-    
-    # Update bar chart title and store as reactive variable
-    observeEvent(c(rv$yaxis, input$medicine, input$area, input$date_range), {
-        rv$bar_title <- get_bar_title(rv$yaxis, input$medicine, rv$area, input$date_range)
-        })
 
 
 # Create the leaflet map --------------------------------------------------
@@ -100,21 +75,21 @@ server <- function(input, output, session) {
 # Create the line chart ---------------------------------------------------
     
     output$line_chart <- renderPlotly({
-        create_line_chart(df_for_line(), input$variable, input$date_range, rv)
+        create_line_chart(df_for_line(), input$variable, input$date_range, rv, input$medicine)
     })
     
 
 # Create the bar chart ----------------------------------------------------
 
     output$bar_chart <- renderPlotly({
-        create_bar_chart(df_for_bar(), input$variable, rv)
+        create_bar_chart(df_for_bar(), input$variable, rv, input$date_range, input$medicine, input$area)
     })
 
 
 # Render reactive text ----------------------------------------------------
 
     output$infotext <- renderText({
-        create_text_output(df_for_line(), input$medicine, input$date_range, input$variable, rv)
+        get_output_text(df_for_line(), input$medicine, input$date_range, input$variable, rv)
         })
     
 
@@ -139,15 +114,6 @@ server <- function(input, output, session) {
             readr::write_csv(df[input[["data_table_rows_all"]], ], file)
         }
     )
-    
-    # library(mapview)
-    # map_download_test <- reactive({
-    #     leaflet(options = leafletOptions(zoomDelta = 0.25,
-    #                                      zoomSnap = 0.25)) %>% 
-    #         setView(lat = 53,
-    #                 lng = 0,
-    #                 zoom = 6.75) %>%
-    #         addProviderTiles(provider = "CartoDB.Positron")})
     
     # output$mapdownload <- downloadHandler(filename = paste0(Sys.Date(), "_custom_map.png"),
     # 

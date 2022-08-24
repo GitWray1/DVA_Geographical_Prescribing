@@ -21,7 +21,7 @@ update_map <- function(map_df, input_variable, pal, rv){
                     domain = map_df[[input_variable]],
                     bins = 5,
                     na.color = "#808080")
-    #pal <- colorNumeric("plasma", domain = df_for_map()[[input$variable]])
+    #pal <- colorNumeric("plasma", domain = df_for_map()[[input$variable]]) # continuous
     
     temp <- leafletProxy("mymap", data = map_df) %>%
         clearShapes() %>%
@@ -36,7 +36,7 @@ update_map <- function(map_df, input_variable, pal, rv){
                                                  fillOpacity = 0.7,
                                                  bringToFront = TRUE),
                     label = ~lapply(paste0("<strong>Name: </strong>", map_df$name,
-                                           "<br><strong>", rv$yaxis,":</strong> ", tidy_number(map_df[[input_variable]])),
+                                           "<br><strong>", get_y_title(input_variable),":</strong> ", tidy_number(map_df[[input_variable]])),
                                     htmltools::HTML),
                     labelOptions = labelOptions(textsize = "12px",
                                                 style = list("font-family" = "Arial"))) %>%
@@ -44,7 +44,7 @@ update_map <- function(map_df, input_variable, pal, rv){
         addLegend(position = "bottomleft",
                   pal = pal,
                   values = ~map_df[[input_variable]],
-                  title = rv$yaxis,
+                  title = get_y_title(input_variable),
                   opacity = 0.7)
     return(temp)
 }

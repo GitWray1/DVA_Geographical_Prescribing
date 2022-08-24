@@ -39,23 +39,50 @@ hr {
     margin-bottom: 0.5em;
 }
 
-.navbar-default .navbar-brand:hover {
-  color: white
-}
-
-.navbar-default:hover .navbar-nav>li>a:hover {
-  color: #D5824D
-}
-
 .btn-myClass.btn {
-    color: #2c3e50;
+    color: #000000; 
     background-color: #fff;
-    border-color: #2c3e50;
+    border-color: #000000;
     border: 1px solid;
 }
 
 .btn-myClass.active {
     color: #fff;
-    background-color: #2c3e50;
-    border-color: #2c3e50;
+    background-color: #228096;
+    border-color: #000000;
+}
+
+
+
+.btn-default {
+    color: #ffffff;
+    background-color: #228096;
+    border-color: #000000;
+}
+
+/* Change navbar background */
+.navbar-default {
+    background-color: #228096 !important;
+}
+
+/* Change navbar brand text color */
+.navbar-default .navbar-brand {
+  color: #FFFFFF
+}
+
+/* Change navbar brand text color on hover*/
+.navbar-default .navbar-brand:hover {
+  color: #FFFFFF
+}
+
+/* Change text color shown on navbar tabs upon hover */
+.navbar-default:hover .navbar-nav>li>a:hover {
+  /*previously color: #D17C4D*/
+  color: #FFFFFF;
+  background-color: #00436C;
+}
+
+/* Change background color of selected tab */
+.navbar-default .navbar-nav>.active>a, .navbar-default .navbar-nav>.active>a:hover, .navbar-default .navbar-nav>.active>a:focus {
+    background-color: #00436C  !important;
 }

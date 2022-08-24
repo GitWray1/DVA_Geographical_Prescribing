@@ -12,12 +12,11 @@ library(plotly)
 # Source in other files ---------------------------------------------------
 
 source("R/load_data.R")
+source("R/filtering_functions.R")
 source("R/global_functions.R")
 source("R/map_functions.R")
 source("R/line_bar_functions.R")
-source("R/text_function.R")
-
-# Make sure to explain how to calculate the means and sd in the about page
+source("R/new_text_function.R")
 
 # Create Shiny UI ---------------------------------------------------------
 
@@ -78,7 +77,7 @@ ui <- bootstrapPage(
                                      airMonthpickerInput("date_range",
                                                          "Select date range",
                                                          range = TRUE,
-                                                         value = c(lubridate::as_date(max(df$date)) - lubridate::period("1 year"),
+                                                         value = c(lubridate::as_date(max(df$date)) - lubridate::period("11 months"),
                                                                    lubridate::as_date(max(df$date))),
                                                          dateFormat = "M yyyy",
                                                          minDate = lubridate::as_date(min(df$date)),
@@ -121,7 +120,7 @@ ui <- bootstrapPage(
                    ),
           
           tabPanel("About this dashboard",
-                   includeMarkdown("R/about.rmd"))
+                   includeMarkdown("R/about.Rmd"))
           )
         )
         
