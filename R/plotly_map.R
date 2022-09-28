@@ -1,4 +1,6 @@
 
+# Exploring recreating the leaflet in plotly. Leaflet doesnt have a non-html download.
+# Exploring whether we could add a download button that would download the recreated plotly map.
 
 # Load packages -----------------------------------------------------------
 
