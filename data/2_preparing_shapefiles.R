@@ -9,8 +9,19 @@ library(tidyverse)
 library(sf) # Spatial features
 library(rmapshaper)
 
+# Simplify a single geoJSON file ------------------------------------------
 
-# Load and simplify geoJSONs -----------------------------------------------
+file <- "FILENAME"
+
+# Load and simplify file. keep = 0.05 means we will keep 5% of data points
+temp_df <- st_read(file, as_tibble = TRUE) %>% 
+    ms_simplify(keep = 0.05, keep_shapes = FALSE)
+
+# Save simplified file
+st_write(temp_df, "output_FILE_NAME.geojson")
+
+
+# Load and simplify multiple geoJSONs ------------------------------------------
 
 # List files paths for full geojsons in input directory
 files <- list.files(path= "1_data_prep/input_files/geojsons", pattern = "*.geojson", full.names = TRUE)
@@ -24,7 +35,9 @@ for (i in seq_along(files)) {
   
   temp_df <- st_read(files[[i]], as_tibble = TRUE) %>% 
                 ms_simplify(keep = 0.05, keep_shapes = FALSE)
+  
   st_write(temp_df, str_c(output_dir, "simplified_", basename(files[[i]])))
+  
   print(str_c("Done (",i,"/", length(files),"): ", files[[i]]))
 }
 
